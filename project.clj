@@ -1,10 +1,13 @@
 (defproject cljs-enflame "0.1.0-SNAPSHOT"
   :min-lein-version "2.7.1"
-  :dependencies [[binaryage/oops "0.6.2"]
+  :dependencies [[binaryage/devtools "0.9.4"]
+                 [binaryage/oops "0.6.2"]
                  [org.clojure/clojure "1.9.0"]
                  [org.clojure/clojurescript "1.10.339"]
+                 [re-frame "0.10.6"]
                  [reagent "0.8.1"]
                  [reagent-utils "0.3.1"]
+                 [secretary "1.2.3"]
                  [tupelo "0.9.106"]]
   :plugins [[lein-cljsbuild "1.1.7" :exclusions [[org.clojure/clojure]]]
             [lein-figwheel "0.5.16"]
@@ -40,6 +43,8 @@
                                :output-dir           "resources/public/js/compiled/flintstones-dev"
                                :asset-path           "js/compiled/flintstones-dev" ; rel to figwheel default of `resources/public`
                                ;                       ^^^^^ must match :output-dir
+
+                               :source-map           true
                                :source-map-timestamp true}}
                {:id           "test"
                 :source-paths [ "src/cljc" "test/cljc"
@@ -58,6 +63,7 @@
                                ; :asset-path           "js/compiled/bedrock-tst"  ; not used for testing
                                ; ^^^ rel to figwheel default of `resources/public`
 
+                               :source-map           true
                                :source-map-timestamp true}}]}
 
   ; need to add the compliled assets to the :clean-targets
