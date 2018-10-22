@@ -1,14 +1,13 @@
 (ns flintstones.core
   (:require
     [oops.core :as oops]
-    [reagent.core :as r]
-    [reagent.format :as rf]
-    [clojure.string :as str] ))
+    [reagent.core :as r] ))
 
 (enable-console-print!)
+
 (println
 "This text is printed from src/flintstones/core.cljs.
-Go ahead and edit it and see reloading in action. Again, or not.")
+Go ahead and edit it and see reloading in action. Again, or not. and more")
 (println " Hello World! " )
 
 (def states-all
@@ -79,17 +78,18 @@ Go ahead and edit it and see reloading in action. Again, or not.")
 
 (defonce counter (atom 0))
 
-(defn run []
+(defn start-app []
   (r/render [simple-component] (js/document.getElementById "tgt-div")))
 
 (defn figwheel-reload []
   ; optionally touch your app-state to force rerendering depending on your application
   ; (swap! app-state update-in [:__figwheel_counter] inc)
-  (println "Reloading: " (swap! counter inc)))
+  (println "figwheel-reload - enter => " (swap! counter inc)))
 
 (when (zero? @counter)
   (println "Initial load")
   (figwheel-reload))
-(run)
+(start-app)
+
 
 
