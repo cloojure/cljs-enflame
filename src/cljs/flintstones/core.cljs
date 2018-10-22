@@ -1,14 +1,18 @@
 (ns flintstones.core
   (:require
+    [flintstones.slate :as slate]
     [oops.core :as oops]
     [reagent.core :as r] ))
 
+; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
 (enable-console-print!)
 
 (println
 "This text is printed from src/flintstones/core.cljs.
-Go ahead and edit it and see reloading in action. Again, or not. and more")
-(println " Hello World! " )
+Go ahead and edit it and see reloading in action. Again, or not.")
+(println "Hello World! " )
+
+(println "Hello addition:  " (slate/add2 2 3) )
 
 (def states-all
   ["Alabama" "Alaska" "Arizona" "Arkansas" "California"
