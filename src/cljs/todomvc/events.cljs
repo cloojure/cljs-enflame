@@ -60,6 +60,7 @@
 
 ; #todo (dispatch-event {:event/id <some-id> ...} )   => event map
 ; #todo (add-effect ctx {:effect/id <some-id> ...} )  => updated ctx
+; #todo setup, prep, teardown, completion
 
 ; -- Interceptors --------------------------------------------------------------
 ;
@@ -85,8 +86,19 @@
 ; process the effects produced by the event handler. One could
 ; check if the new value for `app-db` correctly matches a Spec.
 
-; -- First Interceptor ------------------------------------------------------
-;
+; Interceptor which will inject the todos stored in localstore.
+(def local-store-todos-intc
+  (flame/interceptor-state
+    {:id    :local-store-todos-intc
+     :enter (fn [state -event-]
+              (assoc state ; put the localstore todos into the coeffect under :local-store-todos
+                :local-store-todos (into (sorted-map) ; read in todos from localstore, and process into a sorted map
+                                     (some->> (.getItem js/localStorage todo-db/js-localstore-key)
+                                       (cljs.reader/read-string)))))
+     :leave identity}))
+
+
+
 ; Event handlers change state, that's their job. But what happens if there's
 ; a bug in the event handler and it corrupts application state in some subtle way?
 ; First, we create an interceptor called `check-spec-interceptor`. Then,
@@ -138,13 +150,6 @@
 ; It establishes initial application state in `app-db`. That means merging:
 ;   1. Any todos stored in LocalStore (from the last session of this app)
 ;   2. Default initial values
-;
-; Advanced topic:  we inject the todos currently stored in LocalStore
-; into the first, coeffect parameter via use of the interceptor
-;    `(rf/inject-cofx :local-store-todos)`
-;
-; To fully understand this advanced topic, you'll have to read the tutorials
-; and look at the bottom of `db.cljs` for the `:local-store-todos` cofx registration.
 
 (defn initialise-db-handler [ state  -event- ] ; note that `state` is coeffects/effects (ignore the difference)
     (js/console.log :initialise-db )
@@ -174,7 +179,7 @@
 ; #todo #awt merge => global state (old cofx)
 
 (defn set-showing-handler
-  [state [_ new-filter-kw]]     ; new-filter-kw is one of :all, :active or :done
+  [state [-e- new-filter-kw]]     ; new-filter-kw is one of :all, :active or :done
     (assoc-in state [:db :showing] new-filter-kw))
 
 (defn add-todo-handler
@@ -230,7 +235,7 @@
 (defn register-handlers!
   []
   (flame/event-handler-for! :initialise-db
-    [(rf/inject-cofx :local-store-todos)
+    [local-store-todos-intc
      check-spec-intc]
     initialise-db-handler)
 

@@ -27,6 +27,11 @@
 
 (defn from-topic [topic] @(rf/subscribe topic)) ; #todo was (listen ...)
 
+(defn get-in-strict [map path]
+  (let [result [get-in map path ::not-found]]
+    (when (= result ::not-found)
+      (throw (ex-info "get-in-strict: path not found" {:map map :path path})))))
+
 ;---------------------------------------------------------------------------------------------------
 
 ; #todo need macro  (definterceptor todos-done {:name ...   :enter ...   :leave ...} )
@@ -42,6 +47,8 @@
 ; #todo need macro  (with-path ctx [:db :todos] ...) ; extract and replace in ctx
 ; #todo need macro  (with-db ctx ...) ; hardwired for path of [:db]
 
+; #todo maybe macro  (with-result some-val ...) always returns some-val (like identity-with-side-effects)
+
 ; #todo remember this (modify into `(definterceptor trim-event { ... } )`
 (comment
   (def trim-event
@@ -51,6 +58,23 @@
                 (let [trim-fn (fn [event] (-> event rest vec))]
                   (update-in context [:coeffects :event] trim-fn)))))
   )
+
+ ; #todo definterceptor-state (auto-set :id same as name)
+(defn interceptor-state
+  "Creates a simple interceptor that accepts & returns state. Usage:
+
+      (interceptor-state { :id    :some-intc
+                           :enter (fn [& args] ...)
+                           :leave (fn [& args] ...) } )
+
+  NOTE: enflame uses Pedestal-style `:enter` & `:leave` keys for the interceptor map.
+  "
+  [map-in]         ; #todo :- tsk/KeyMap
+  {:id     (get-in-strict map-in [:id])
+   :before (get-in-strict map-in [:enter])
+   :after  (get-in-strict map-in [:leave])})
+; #todo allow one of :enter or :leave to be blank => identity
+; #todo add :error key like pedestal?
 
 ;---------------------------------------------------------------------------------------------------
 ; tracing interceptor (modified rfstd/debug
@@ -63,14 +87,14 @@
   2. orig db
   3. new db
   "
-  (rfi/->interceptor
+  (rfi/->interceptor ; #todo convert to interceptor-state
     :id     ::trace
     :before (fn debug-before
               [context]
               (rflog/console :log "Handling re-frame event:" (rfi/get-coeffect context :event))
               context)
 
-    :after  (fn debug-after
+    :after  (fn debug-after ; #todo => (with-result context ...)
               [context]
               (let [event   (rfi/get-coeffect context :event)
                     db-orig (rfi/get-coeffect context :db)

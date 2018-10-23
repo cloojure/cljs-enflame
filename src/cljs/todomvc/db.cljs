@@ -51,24 +51,3 @@
   [todos]
   (.setItem js/localStorage js-localstore-key (str todos))) ; sorted-map written as an EDN map
 
-; -- cofx Registrations  -----------------------------------------------------
-; Use `reg-cofx` to register a "coeffect handler" which will inject the todos
-; stored in localstore.
-;
-; To see it used, look in `events.cljs` at the event handler for `:initialise-db`.
-; That event handler has the interceptor `(inject-cofx :local-store-todos)`
-; The function registered below will be used to fulfill that request.
-;
-; We must supply a `sorted-map` but in LocalStore it is stored as a `map`.
-(rf/reg-cofx
-  :local-store-todos
-  (fn [cofx _]
-    ; put the localstore todos into the coeffect under :local-store-todos
-    (assoc cofx :local-store-todos
-                ; read in todos from localstore, and process into a sorted map
-                (into (sorted-map)
-                  (some->> (.getItem js/localStorage js-localstore-key)
-                    (cljs.reader/read-string)))))) ; EDN map -> map
-
-
-
