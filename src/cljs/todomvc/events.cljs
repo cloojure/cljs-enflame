@@ -87,16 +87,18 @@
 ; check if the new value for `app-db` correctly matches a Spec.
 
 ; Interceptor which will inject the todos stored in localstore.
+
+; #todo
 (def local-store-todos-intc
   (flame/interceptor-state
     {:id    :local-store-todos-intc
-     :enter (fn [state -event-]
-              (assoc state ; put the localstore todos into the coeffect under :local-store-todos
-                :local-store-todos (into (sorted-map) ; read in todos from localstore, and process into a sorted map
-                                     (some->> (.getItem js/localStorage todo-db/js-localstore-key)
-                                       (cljs.reader/read-string)))))
+     :enter (fn [state]
+              ;(assoc state ; put the localstore todos into the coeffect under :local-store-todos
+              ;  :local-store-todos (into (sorted-map) ; read in todos from localstore, and process into a sorted map
+              ;                       (some->> (.getItem js/localStorage todo-db/js-localstore-key)
+              ;                         (cljs.reader/read-string))))
+              {:local-store-todos nil})
      :leave identity}))
-
 
 
 ; Event handlers change state, that's their job. But what happens if there's
@@ -117,7 +119,8 @@
     (throw (ex-info (str "spec check failed: " (s/explain-str a-spec db)) {}))))
 
 (def check-spec-intc
-  (rf/after ; An `after` interceptor receives `db` from (:effects ctx). Return value is ignored.
+  "Checks app-db for correctness after event handler runs"
+  (rf/after ; An `after` interceptor receives `db` from (get-in ctx [:effects db]). Return value is ignored.
     (fn [db -event-]
       (check-and-throw :todomvc.db/db db))))
 
@@ -177,6 +180,10 @@
 ; usage:  (flame/dispatch-event [:set-showing :active])
 ; This event is dispatched when the user clicks on one of the 3 filter buttons at the bottom of the display.
 ; #todo #awt merge => global state (old cofx)
+
+; #TODO CHANGE ALL EVENTS to be maps => {:id :set-showing   :new-filter-kw :completed ...}
+; #TODO CHANGE ALL HANDLERS to be (defn some-handler [state event]   (with-map-vals event [id new-filter-kw] ...)
+
 
 (defn set-showing-handler
   [state [-e- new-filter-kw]]     ; new-filter-kw is one of :all, :active or :done
@@ -240,7 +247,7 @@
     initialise-db-handler)
 
   (flame/event-handler-for! :set-showing ; receives events from URL changes via History/secretary
-    [check-spec-intc] ; after event handler runs, check app-db for correctness. Does it still match Spec?
+    [check-spec-intc]
     set-showing-handler)
 
   (flame/event-handler-for! :add-todo

@@ -28,9 +28,11 @@
 (defn from-topic [topic] @(rf/subscribe topic)) ; #todo was (listen ...)
 
 (defn get-in-strict [map path]
-  (let [result [get-in map path ::not-found]]
+  (let [result (get-in map path ::not-found)]
+    (js/console.log [:get-in-strict {:path path :result result}])
     (when (= result ::not-found)
-      (throw (ex-info "get-in-strict: path not found" {:map map :path path})))))
+      (throw (ex-info "get-in-strict: path not found" {:map map :path path})))
+    result))
 
 ;---------------------------------------------------------------------------------------------------
 
@@ -60,7 +62,7 @@
   )
 
  ; #todo definterceptor-state (auto-set :id same as name)
-(defn interceptor-state
+(defn interceptor-state ; #todo need test
   "Creates a simple interceptor that accepts & returns state. Usage:
 
       (interceptor-state { :id    :some-intc
@@ -70,9 +72,14 @@
   NOTE: enflame uses Pedestal-style `:enter` & `:leave` keys for the interceptor map.
   "
   [map-in]         ; #todo :- tsk/KeyMap
-  {:id     (get-in-strict map-in [:id])
-   :before (get-in-strict map-in [:enter])
-   :after  (get-in-strict map-in [:leave])})
+  (js/console.log :map-in  map-in)
+  (let [enter-fn  (get-in-strict map-in [:enter])
+        leave-fn  (get-in-strict map-in [:leave])
+        before-fn (fn [ctx] (update-in ctx [:coeffects] enter-fn))
+        after-fn  (fn [ctx] (update-in ctx [ :effects]  leave-fn))]
+  {:id (get-in-strict map-in [:id])
+   :before before-fn
+   :after  after-fn}))
 ; #todo allow one of :enter or :leave to be blank => identity
 ; #todo add :error key like pedestal?
 
