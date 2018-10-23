@@ -120,9 +120,38 @@
               (let [event   (rfi/get-coeffect context :event)
                     db-orig (rfi/get-coeffect context :db)
                     db-new  (rfi/get-effect   context :db ::not-found)]
-                (do (rflog/console :group "db for:" event)
+                (do (rflog/console :group "db for:" event) ; #todo don't need `do`
                     (rflog/console :log :before db-orig)
                     (rflog/console :log :after db-new)
                     (rflog/console :groupEnd))
                 context))))
+(def trace-print
+  "An interceptor which logs/instruments an event handler's actions to
+  `js/console.log`. See examples/todomvc/src/events.cljs for use.
+  Output includes:
+  1. the event vector
+  2. orig db
+  3. new db
+  "
+  (rfi/->interceptor ; #todo convert to interceptor-state
+    :id     ::trace
+    :before (fn debug-before
+              [context]
+              (rflog/console :log "Handling re-frame event:" (rfi/get-coeffect context :event))
+              context)
+
+    :after  (fn debug-after ; #todo => (with-result context ...)
+              [context]
+              (enable-console-print!)
+              (let [event   (rfi/get-coeffect context :event)
+                    db-orig (rfi/get-coeffect context :db)
+                    db-new  (rfi/get-effect   context :db ::not-found)]
+                (println :log :enter db-orig)
+                (println :log :leave db-new)
+                context))))
+
+; #todo   => (event-handler-set!    :evt-name  (fn [& args] ...)) or subscribe-to  subscribe-to-event
+; #todo   => (event-handler-clear!  :evt-name)
+; #todo option for log wrapper (with-event-logging  logger-fn
+; #todo                          (event-handler-set! :evt-name  (fn [& args] ...)))
 

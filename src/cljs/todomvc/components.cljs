@@ -100,7 +100,7 @@
      :on-save     #(when-not (empty? (str/trim %))
                      (flame/dispatch-event [:add-todo %]))}]])
 
-(defn todo-app []
+(defn root []
   [:div
    [:section#todoapp
     [task-entry]

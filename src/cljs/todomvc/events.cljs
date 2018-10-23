@@ -48,16 +48,7 @@
 
 ; #todo teardown, completion, tasks, commands, orders
 
-; -- Interceptors --------------------------------------------------------------
-;
-;
-; Interceptors with an `:after` action, can, among other things,
-; process the effects produced by the event handler. One could
-; check if the new value for `app-db` correctly matches a Spec.
-
-; Interceptor which will inject the todos stored in localstore.
-
-(def local-store-todos-intc
+(def local-store-todos-intc ; injects the todos stored in localstore.
   (flame/interceptor-state
     {:id    :local-store-todos-intc
      :enter (fn [state]
@@ -67,58 +58,33 @@
                                        (cljs.reader/read-string)))))
      :leave identity}))
 
-; Event handlers change state, that's their job. But what happens if there's
-; a bug in the event handler and it corrupts application state in some subtle way?
-; First, we create an interceptor called `check-spec-interceptor`. Then,
-; we use this interceptor in the interceptor chain of all event handlers.
-; When included in the interceptor chain of an event handler, this interceptor
-; runs `check-and-throw` `after` the event handler has finished, checking
-; the value for `app-db` against a spec.
-; If the event handler corrupted the value for `app-db` an exception will be
-; thrown. This helps us detect event handler bugs early.
-; Because all state is held in `app-db`, we are effectively validating the
-; ENTIRE state of the application after each event handler runs.  All of it.
-(defn check-and-throw
-  "Throws an exception if `db` doesn't match the Spec `a-spec`."
-  [a-spec db]
-  (when-not (s/valid? a-spec db)
-    (throw (ex-info (str "spec check failed: " (s/explain-str a-spec db)) {}))))
-
 (def check-spec-intc
   "Checks app-db for correctness after event handler runs"
   (rf/after ; An `after` interceptor receives `db` from (get-in ctx [:effects db]). Return value is ignored.
     (fn [db -event-]
-      (check-and-throw :todomvc.db/db db))))
+      (when-not (s/valid? :todomvc.db/db db)
+        (throw (ex-info (str "spec check failed: " (s/explain-str :todomvc.db/db db)) db))))))
 
-; Part of the TodoMVC is to store todos in local storage. Here we define an interceptor to do this.
+; Part of the TodoMVC Challenge is to store todos in local storage. Here we define an interceptor to do this.
 ; This interceptor runs `after` an event handler. It stores the current todos into local storage.
 (def save-todos-intc
-  (rf/after         ; An `after` interceptor receives `db` from (get-in ctx [:effects db]). Return value is ignored.
+  (rf/after ; An `after` interceptor receives `db` from (get-in ctx [:effects db]). Return value is ignored.
     todo-db/todos->local-store))
 
-; -- Interceptor Chain ------------------------------------------------------
-; Each event handler can have its own chain of interceptors.
-; We now create the interceptor chain shared by all event handlers
-; which manipulate todos. A chain of interceptors is a vector of interceptors.
-; Explanation of the `path` Interceptor is given further below.
-(def std-interceptors
+(def common-interceptors
   [check-spec-intc
    save-todos-intc
   ;rfstd/debug
   ;flame/trace
+   flame/trace-print
   ])
 
-; -- Helpers -----------------------------------------------------------------
 (defonce todo-id-atom (atom 0))
 (defn next-todo-id
   "Returns the next todo ID in a monolithic sequence. "
   []
   (flame/swap-out! todo-id-atom inc))
 
-; -- Event Handlers ----------------------------------------------------------
-
-; usage:  (flame/dispatch-event [:initialise-db])
-;
 ; This event is dispatched when the app's `main` ns is loaded (todomvc.core).
 ; It establishes initial application state in `app-db`. That means merging:
 ;   1. Any todos stored in LocalStore (from the last session of this app)
@@ -132,84 +98,59 @@
       (js/console.log :initialize-db :leave result)
       result))
 
-; #todo   => (event-handler-set!    :evt-name  (fn [& args] ...)) or subscribe-to  subscribe-to-event
-; #todo   => (event-handler-clear!  :evt-name)
-; #todo option for log wrapper (with-event-logging  logger-fn
-; #todo                          (event-handler-set! :evt-name  (fn [& args] ...)))
-; #todo  context -> event
-; #todo    :event/id
-; #todo    :event/params
-; #todo    coeffects -> inputs    ; data
-; #todo      effects -> outputs   ; result
-
 ; Need a way to document event names and args
 ;    #todo (defevent set-showing [state])
 ; #todo event handlers take only params-map (fn [params :- tsk/Map] ...)
 
-; usage:  (flame/dispatch-event [:set-showing :active])
-; This event is dispatched when the user clicks on one of the 3 filter buttons at the bottom of the display.
 ; #todo #awt merge => global state (old cofx)
 
 ; #TODO CHANGE ALL EVENTS to be maps => {:id :set-showing   :new-filter-kw :completed ...}
 ; #TODO CHANGE ALL HANDLERS to be (defn some-handler [state event]   (with-map-vals event [id new-filter-kw] ...)
 
 (defn set-showing-handler
-  [state [-e- new-filter-kw]]     ; new-filter-kw is one of :all, :active or :done
-    (assoc-in state [:db :showing] new-filter-kw))
+  "Handles clicks on one of the 3 filter buttons at the bottom of the display."
+  [state [-e-
+          new-filter-kw]] ; :- #{ :all, :active or :done }
+  (assoc-in state [:db :showing] new-filter-kw))
 
-(defn add-todo-handler
-  [state [-e- text]] ; => {:global-state xxx   :event {:event-name xxx  :arg1 yyy  :arg2 zzz ...}}
-    (update-in state [:db :todos]  ; #todo make this be (with-path state [:db :todos] ...) macro
-      (fn [todos]                 ; #todo kill this part
-        (let [new-id (next-todo-id)
-              result (assoc-in todos [new-id] {:id new-id :title text :done false})]
-          (js/console.info :add-todo :leave result)
-          result))))
+(defn add-todo-handler [state [-e- text]]
+  (update-in state [:db :todos] ; #todo make this be (with-path state [:db :todos] ...) macro
+    (fn [todos]     ; #todo kill this part
+      (let [new-id (next-todo-id)]
+        (into todos {new-id {:id new-id :title text :done false}})))))
 
-(defn toggle-done-handler
-  [state [-e- todo-id]]
-    (update-in state [:db :todos]
-      (fn [todos]
-        (let [result (update-in todos [todo-id :done] not)]
-          (js/console.info :toggle-done :leave result)
-          result))))
+(defn toggle-done-handler [state [-e- todo-id]]
+  (update-in state [:db :todos]
+    (fn [todos] (update-in todos [todo-id :done] not))))
 
-(defn save-handler
-  [state [-e- todo-id title]]
-    (let [result (assoc-in state [:db :todos todo-id :title] title)]
-      (js/console.info :save :leave result )
-      result))
+(defn save-handler [state [-e- todo-id title]]
+  (assoc-in state [:db :todos todo-id :title] title))
 
-(defn delete-todo-handler
-  [state [-e- todo-id]]
-    (let [result (flame/dissoc-in state [:db :todos todo-id])]
-      (js/console.info :delete-todo :leave result )
-      result))
+(defn delete-todo-handler [state [-e- todo-id]]
+  (flame/dissoc-in state [:db :todos todo-id]))
 
 (defn clear-completed-handler
   [state -event-]
-    (let [todos     (get-in state [:db :todos])
-          done-ids  (->> (vals todos) ; find id's for todos where (:done -> true)
-                      (filter :done)
-                      (map :id))
-          todos-new (reduce dissoc todos done-ids) ; delete todos which are done
-          result    (assoc-in state [:db :todos] todos-new)]
-      (js/console.info :clear-completed :leave result)
-      result))
+  (let [todos     (get-in state [:db :todos])
+        done-ids  (->> (vals todos) ; find id's for todos where (:done -> true)
+                    (filter :done)
+                    (map :id))
+        todos-new (reduce dissoc todos done-ids) ; delete todos which are done
+        result    (assoc-in state [:db :todos] todos-new)]
+    result))
 
 (defn complete-all-toggle-handler
   [state -event-]
-    (let [todos     (get-in state [:db :todos])
-          new-done  (not-every? :done (vals todos)) ; work out: toggle true or false?
-          todos-new (reduce #(assoc-in %1 [%2 :done] new-done)
-                      todos
-                      (keys todos))
-          result    (assoc-in state [:db :todos] todos-new)]
-      (js/console.info :complete-all-toggle :leave result)
-      result))
+  (let [todos     (get-in state [:db :todos])
+        new-done  (not-every? :done (vals todos)) ; work out: toggle true or false?
+        todos-new (reduce #(assoc-in %1 [%2 :done] new-done)
+                    todos
+                    (keys todos))
+        result    (assoc-in state [:db :todos] todos-new)]
+    result))
 
 (defn register-handlers! []
-  (flame/event-handler-for! :initialize-db
+  (flame/event-handler-for! :initialize-db   ; usage: (flame/dispatch-event [:initialise-db])
     [local-store-todos-intc check-spec-intc]
     initialise-db-handler)
 
@@ -218,25 +159,25 @@
     set-showing-handler)
 
   (flame/event-handler-for! :add-todo
-    std-interceptors
+    common-interceptors
     add-todo-handler)
 
   (flame/event-handler-for! :toggle-done
-    std-interceptors
+    common-interceptors
     toggle-done-handler)
 
   (flame/event-handler-for! :save
-    std-interceptors
+    common-interceptors
     save-handler)
 
   (flame/event-handler-for! :delete-todo
-    std-interceptors
+    common-interceptors
     delete-todo-handler)
 
   (flame/event-handler-for! :clear-completed
-    std-interceptors
+    common-interceptors
     clear-completed-handler)
 
   (flame/event-handler-for! :complete-all-toggle
-    std-interceptors
+    common-interceptors
     complete-all-toggle-handler))

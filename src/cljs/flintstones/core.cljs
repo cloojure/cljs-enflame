@@ -38,7 +38,7 @@ Go ahead and edit it and see reloading in action. Again, or not.")
      [:span {:style {:color "red"}} " and red"] " text."]]
    [:hr]
    [:div
-    [todomvc.components/todo-app]]
+    [todomvc.components/root]]
    [:hr] ])
 
 ;---------------------------------------------------------------------------------------------------
