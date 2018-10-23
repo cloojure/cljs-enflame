@@ -19,21 +19,10 @@
 ; interceptors' :after  fns should process    data from   :effects map
 
 ;-----------------------------------------------------------------------------
-; #todo unify interceptors/handlers:  all accept & return
-; #todo   ctx => {:state {...}   ; was `:db`
-; #todo           ... ...}       ; other info here
-; #todo unify coeffects (input vals) and effects (output vals)
-; #todo interceptors must fill in or act up vals (keys) they care about
-
 ; #todo (definterceptor my-intc  ; added to :id field as kw
 ; #todo   "doc string"
-; #todo   {:enter (fn [ctx] ...)              tx: ctx => ctx
-; #todo    :leave (fn [ctx] ...) } )
-
-;-----------------------------------------------------------------------------
-; #todo :before    => :enter       to match pedestal
-; #todo :after     => :leave
-
+; #todo   {:enter (fn [state] ...)       to match pedestal
+; #todo    :leave (fn [state] ...) } )
 ; #todo event handlers: document that `state` is coeffects/effects (ignore the difference)
 ;     coeffects  =>  state-in
 ;       effects  =>  state-out
@@ -47,42 +36,20 @@
 ; #todo         :some-param "hello"  :another-param :italics } ] }
 
 ; #todo make all routes define an intc chain.
-; #todo each intc is {:id ...  :enter ...  :leave ...} (coerce if :before/:after found - strictly)
-; #todo each :enter/:leave fn is (fn [params-map] ...)
-; #todo    where params-map  =>  {:event {:event/id ...  :param1 <val1>  :param2 <val2> ...}
-; #todo                           :state {:app          ...
-; #todo                                   :local-store  ...
-; #todo                                   :datascript   ... }}
 
-; #todo replace (reg-cofx ...)  =>  (definterceptor ...)  ; defines a regular fn
-
-; #todo [:delete-item 42] => {:event/id :delete-item :value 42}
-; #todo   {:event/id :add-entry  :key :name :value "Joe"}
+; #todo [:delete-item 42] => {:event/id :delete-item :idx 42}
 ; #todo   {:event/id :set-timer  :units :ms :value 50 :action (fn [] (js/alert "Expired!") }
 
 ; #todo (dispatch-event {:event/id <some-id> ...} )   => event map
-; #todo (add-effect ctx {:effect/id <some-id> ...} )  => updated ctx
-; #todo setup, prep, teardown, completion
+; #todo (add-task state {:effect/id <some-id> ...} )  => updated state
+
+; #todo setup, prep, resources, augments, ancillary, annex, ctx, info, data
+; #todo environment, adornments, supplements
+
+; #todo teardown, completion, tasks, commands, orders
 
 ; -- Interceptors --------------------------------------------------------------
 ;
-; Interceptors are a more advanced topic. So, we're plunging into the deep
-; end here.
-;
-; There is a tutorial on Interceptors in re-frame's `/docs`, but to get
-; you going fast, here's a very high level description ...
-;
-; Every event handler can be "wrapped" in a chain of interceptors. A
-; "chain of interceptors" is actually just a "vector of interceptors". Each
-; of these interceptors can have a `:before` function and an `:after` function.
-; Each interceptor wraps around the "handler", so that its `:before`
-; is called before the event handler runs, and its `:after` runs after
-; the event handler has run.
-;
-; Interceptors with a `:before` action, can be used to "inject" values
-; into what will become the `coeffects` parameter of an event handler.
-; That's a way of giving an event handler access to certain resources,
-; like values in LocalStore.
 ;
 ; Interceptors with an `:after` action, can, among other things,
 ; process the effects produced by the event handler. One could
