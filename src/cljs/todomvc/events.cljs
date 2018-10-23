@@ -140,11 +140,11 @@
   ])
 
 ; -- Helpers -----------------------------------------------------------------
-(defn allocate-next-id
-  "Returns the next todo id. Assumes todos are sorted.
-  Returns one more than the current largest id."
-  [todos]
-  ((fnil inc 0) (last (keys todos))))
+(defonce todo-id-atom (atom 0))
+(defn get-next-todo-id
+  "Returns the next todo ID in a monolithic sequence. "
+  []
+  (flame/get-and-swap! todo-id-atom inc))
 
 ; -- Event Handlers ----------------------------------------------------------
 
@@ -192,27 +192,28 @@
   [state [-e- text]] ; => {:global-state xxx   :event {:event-name xxx  :arg1 yyy  :arg2 zzz ...}}
     (update-in state [:db :todos]  ; #todo make this be (with-path state [:db :todos] ...) macro
       (fn [todos]                 ; #todo kill this part
-        (let [id     (allocate-next-id todos)
-              result (assoc-in todos [id] {:id id :title text :done false})]
+        (let [new-id (get-next-todo-id)
+              result (assoc-in todos [new-id] {:id new-id :title text :done false})]
           (js/console.info :add-todo :leave result)
           result))))
+
 (defn toggle-done-handler
-  [state [-e- id]]
+  [state [-e- todo-id]]
     (update-in state [:db :todos]
       (fn [todos]
-        (let [result (update-in todos [id :done] not)]
+        (let [result (update-in todos [todo-id :done] not)]
           (js/console.info :toggle-done :leave result)
           result))))
 
 (defn save-handler
-  [state [-e- id title]]
-    (let [result (assoc-in state [:db :todos id :title] title)]
+  [state [-e- todo-id title]]
+    (let [result (assoc-in state [:db :todos todo-id :title] title)]
       (js/console.info :save :leave result )
       result))
 
 (defn delete-todo-handler
-  [state [-e- id]]
-    (let [result (flame/dissoc-in state [:db :todos id])]
+  [state [-e- todo-id]]
+    (let [result (flame/dissoc-in state [:db :todos todo-id])]
       (js/console.info :delete-todo :leave result )
       result))
 
@@ -238,11 +239,9 @@
       (js/console.info :complete-all-toggle :leave result)
       result))
 
-(defn register-handlers!
-  []
+(defn register-handlers! []
   (flame/event-handler-for! :initialise-db
-    [local-store-todos-intc
-     check-spec-intc]
+    [local-store-todos-intc check-spec-intc]
     initialise-db-handler)
 
   (flame/event-handler-for! :set-showing ; receives events from URL changes via History/secretary
@@ -271,5 +270,4 @@
 
   (flame/event-handler-for! :complete-all-toggle
     std-interceptors
-    complete-all-toggle-handler
-    ))
+    complete-all-toggle-handler))

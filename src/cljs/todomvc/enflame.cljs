@@ -33,6 +33,16 @@
       (throw (ex-info "get-in-strict: path not found" {:map map :path path})))
     result))
 
+(defn get-and-swap! ; #todo => tupelo.core.cljc
+  "Gets the current value of an atom,  pplies clojure.core/swap! to an atom,
+  Returns the OLD value."
+  [tgt-atom swap-fn]
+  (loop [old-val @tgt-atom
+         new-val (swap-fn old-val)]
+    (if (compare-and-set! tgt-atom old-val new-val)
+      old-val
+      (recur old-val new-val))))
+
 ;---------------------------------------------------------------------------------------------------
 
 ; #todo need macro  (definterceptor todos-done {:name ...   :enter ...   :leave ...} )
