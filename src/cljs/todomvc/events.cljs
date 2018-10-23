@@ -93,11 +93,10 @@
   (flame/interceptor-state
     {:id    :local-store-todos-intc
      :enter (fn [state]
-              ;(assoc state ; put the localstore todos into the coeffect under :local-store-todos
-              ;  :local-store-todos (into (sorted-map) ; read in todos from localstore, and process into a sorted map
-              ;                       (some->> (.getItem js/localStorage todo-db/js-localstore-key)
-              ;                         (cljs.reader/read-string))))
-              {:local-store-todos nil})
+              (assoc state ; put the localstore todos into the coeffect under :local-store-todos
+                :local-store-todos (into (sorted-map) ; read in todos from localstore, and process into a sorted map
+                                     (some->> (.getItem js/localStorage todo-db/js-localstore-key)
+                                       (cljs.reader/read-string)))))
      :leave identity}))
 
 
