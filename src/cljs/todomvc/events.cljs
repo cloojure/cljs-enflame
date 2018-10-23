@@ -141,10 +141,11 @@
 
 ; -- Helpers -----------------------------------------------------------------
 (defonce todo-id-atom (atom 0))
-(defn get-next-todo-id
+(defn next-todo-id
   "Returns the next todo ID in a monolithic sequence. "
   []
-  (flame/get-and-swap! todo-id-atom inc))
+  (let [[old -new-] (swap-vals! todo-id-atom inc)]
+    old))
 
 ; -- Event Handlers ----------------------------------------------------------
 
@@ -192,7 +193,7 @@
   [state [-e- text]] ; => {:global-state xxx   :event {:event-name xxx  :arg1 yyy  :arg2 zzz ...}}
     (update-in state [:db :todos]  ; #todo make this be (with-path state [:db :todos] ...) macro
       (fn [todos]                 ; #todo kill this part
-        (let [new-id (get-next-todo-id)
+        (let [new-id (next-todo-id)
               result (assoc-in todos [new-id] {:id new-id :title text :done false})]
           (js/console.info :add-todo :leave result)
           result))))
