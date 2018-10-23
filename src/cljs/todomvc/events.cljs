@@ -186,46 +186,17 @@
           (js/console.info :toggle-done :leave result)
           result))))
 
-(flame/event-handler-for! :initialise-db
-  ; interceptor chain
-  [(rf/inject-cofx :local-store-todos) ; gets todos from localstore, and puts value into coeffects arg
-   check-spec-intc] ; after event handler runs, check app-db for correctness. Does it still match Spec?
-  initialise-db-handler)
-
-; usage:  (flame/dispatch-event [:set-showing :active])
-; This event is dispatched when the user clicks on one of the 3 filter buttons at the bottom of the display.
-  ; #todo #awt merge => global state (old cofx)
-
-(flame/event-handler-for! :set-showing ; receives events from URL changes via History/secretary
-  [check-spec-intc] ; after event handler runs, check app-db for correctness. Does it still match Spec?
-  set-showing-handler)
-
-(flame/event-handler-for! :add-todo
-  std-interceptors
-  add-todo-handler )
-
-(flame/event-handler-for! :toggle-done
-  std-interceptors
-  toggle-done-handler
-  )
-
-(flame/event-handler-for! :save
-  std-interceptors
-  (fn [state [-e- id title]]
+(defn save-handler [state [-e- id title]]
     (let [result (assoc-in state [:db :todos id :title] title)]
       (js/console.info :save :leave result )
-      result)))
+      result))
 
-(flame/event-handler-for! :delete-todo
-  std-interceptors
-  (fn [state [-e- id]]
+(defn delete-todo-handler [state [-e- id]]
     (let [result (flame/dissoc-in state [:db :todos id])]
       (js/console.info :delete-todo :leave result )
-      result)))
+      result))
 
-(flame/event-handler-for! :clear-completed
-  std-interceptors
-  (fn [state -event-]
+(defn clear-completed-handler [state -event-]
     (let [todos     (get-in state [:db :todos])
           done-ids  (->> (vals todos) ; find id's for todos where (:done -> true)
                       (filter :done)
@@ -233,11 +204,9 @@
           todos-new (reduce dissoc todos done-ids) ; delete todos which are done
           result    (assoc-in state [:db :todos] todos-new)]
       (js/console.info :clear-completed :leave result)
-      result)))
+      result))
 
-(flame/event-handler-for! :complete-all-toggle
-  std-interceptors
-  (fn [state -event-]
+(defn complete-all-toggle-handler [state -event-]
     (let [todos     (get-in state [:db :todos])
           new-done  (not-every? :done (vals todos)) ; work out: toggle true or false?
           todos-new (reduce #(assoc-in %1 [%2 :done] new-done)
@@ -245,4 +214,44 @@
                       (keys todos))
           result    (assoc-in state [:db :todos] todos-new)]
       (js/console.info :complete-all-toggle :leave result)
-      result)))
+      result))
+
+(defn register-handlers! []
+  (flame/event-handler-for! :initialise-db
+    ; interceptor chain
+    [(rf/inject-cofx :local-store-todos) ; gets todos from localstore, and puts value into coeffects arg
+     check-spec-intc] ; after event handler runs, check app-db for correctness. Does it still match Spec?
+    initialise-db-handler)
+
+  ; usage:  (flame/dispatch-event [:set-showing :active])
+  ; This event is dispatched when the user clicks on one of the 3 filter buttons at the bottom of the display.
+  ; #todo #awt merge => global state (old cofx)
+
+  (flame/event-handler-for! :set-showing ; receives events from URL changes via History/secretary
+    [check-spec-intc] ; after event handler runs, check app-db for correctness. Does it still match Spec?
+    set-showing-handler)
+
+  (flame/event-handler-for! :add-todo
+    std-interceptors
+    add-todo-handler)
+
+  (flame/event-handler-for! :toggle-done
+    std-interceptors
+    toggle-done-handler)
+
+  (flame/event-handler-for! :save
+    std-interceptors
+    save-handler)
+
+  (flame/event-handler-for! :delete-todo
+    std-interceptors
+    delete-todo-handler)
+
+  (flame/event-handler-for! :clear-completed
+    std-interceptors
+    clear-completed-handler)
+
+  (flame/event-handler-for! :complete-all-toggle
+    std-interceptors
+    complete-all-toggle-handler
+    ))
