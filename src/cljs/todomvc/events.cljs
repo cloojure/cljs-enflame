@@ -88,7 +88,6 @@
 
 ; Interceptor which will inject the todos stored in localstore.
 
-; #todo
 (def local-store-todos-intc
   (flame/interceptor-state
     {:id    :local-store-todos-intc
@@ -98,7 +97,6 @@
                                      (some->> (.getItem js/localStorage todo-db/js-localstore-key)
                                        (cljs.reader/read-string)))))
      :leave identity}))
-
 
 ; Event handlers change state, that's their job. But what happens if there's
 ; a bug in the event handler and it corrupts application state in some subtle way?
@@ -123,20 +121,23 @@
     (fn [db -event-]
       (check-and-throw :todomvc.db/db db))))
 
+; Part of the TodoMVC is to store todos in local storage. Here we define an interceptor to do this.
+; This interceptor runs `after` an event handler. It stores the current todos into local storage.
+(def save-todos-intc
+  (rf/after         ; An `after` interceptor receives `db` from (get-in ctx [:effects db]). Return value is ignored.
+    todo-db/todos->local-store))
+
 ; -- Interceptor Chain ------------------------------------------------------
 ; Each event handler can have its own chain of interceptors.
 ; We now create the interceptor chain shared by all event handlers
 ; which manipulate todos. A chain of interceptors is a vector of interceptors.
 ; Explanation of the `path` Interceptor is given further below.
 (def std-interceptors
-  [check-spec-intc      ; ensure the spec is still valid  (rf/after)
-
-   ; Part of the TodoMVC is to store todos in local storage. Here we define an interceptor to do this.
-   ; This interceptor runs `after` an event handler. It stores the current todos into local storage.
-   (rf/after todo-db/todos->local-store)
-   rfstd/debug
+  [check-spec-intc
+   save-todos-intc
+  ;rfstd/debug
   ;flame/trace
-   ]) ; write todos to localstore  (rf/after)
+  ])
 
 ; -- Helpers -----------------------------------------------------------------
 (defn allocate-next-id
@@ -146,15 +147,15 @@
   ((fnil inc 0) (last (keys todos))))
 
 ; -- Event Handlers ----------------------------------------------------------
+
 ; usage:  (flame/dispatch-event [:initialise-db])
 ;
 ; This event is dispatched when the app's `main` ns is loaded (todomvc.core).
 ; It establishes initial application state in `app-db`. That means merging:
 ;   1. Any todos stored in LocalStore (from the last session of this app)
 ;   2. Default initial values
-
 (defn initialise-db-handler [ state  -event- ] ; note that `state` is coeffects/effects (ignore the difference)
-    (js/console.log :initialise-db )
+    (js/console.log :initialise-db :enter state )
     (let [{:keys [db local-store-todos]} state
           result {:db todo-db/default-db ; #awt
                   ; #awt (assoc todo-db/default-db :todos local-store-todos)
@@ -182,7 +183,6 @@
 
 ; #TODO CHANGE ALL EVENTS to be maps => {:id :set-showing   :new-filter-kw :completed ...}
 ; #TODO CHANGE ALL HANDLERS to be (defn some-handler [state event]   (with-map-vals event [id new-filter-kw] ...)
-
 
 (defn set-showing-handler
   [state [-e- new-filter-kw]]     ; new-filter-kw is one of :all, :active or :done

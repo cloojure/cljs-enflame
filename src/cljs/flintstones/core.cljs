@@ -13,7 +13,7 @@
     )
   (:require-macros [secretary.core :as secretary])
   (:import [goog History]
-           [goog.history EventType]) )
+           [goog.history EventType]))
 
 ; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
 (enable-console-print!)

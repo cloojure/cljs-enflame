@@ -29,7 +29,6 @@
 
 (defn get-in-strict [map path]
   (let [result (get-in map path ::not-found)]
-    (js/console.log [:get-in-strict {:path path :result result}])
     (when (= result ::not-found)
       (throw (ex-info "get-in-strict: path not found" {:map map :path path})))
     result))
@@ -38,7 +37,13 @@
 
 ; #todo need macro  (definterceptor todos-done {:name ...   :enter ...   :leave ...} )
 
-(defn event-handler-for! [& args] (apply rf/reg-event-fx args))
+(defn event-handler-for!
+  [event-id interceptor-chain handler]
+  (when-not (keyword? event-id) (throw (ex-info "illegal event-id" event-id)))
+  (when-not (vector? interceptor-chain) (throw (ex-info "illegal interceptor-chain" interceptor-chain)))
+  (when-not (every? map? interceptor-chain) (throw (ex-info "illegal interceptor" interceptor-chain))) ; #todo detail intc map
+  (when-not (fn? handler) (throw (ex-info "illegal handler" handler)))
+  (rf/reg-event-fx event-id interceptor-chain handler))
 
 (defn dispatch-event [& args] (apply rf/dispatch args) )
 
