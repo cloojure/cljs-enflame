@@ -3,6 +3,9 @@
             [cljs.spec.alpha :as s]
             [re-frame.core :as rf]))
 
+; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
+(enable-console-print!)
+
 ; -- Spec --------------------------------------------------------------------
 ; This is a clojure.spec specification for the value in app-db. It is like a
 ; Schema. See: http://clojure.org/guides/spec

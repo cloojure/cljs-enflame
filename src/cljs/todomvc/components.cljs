@@ -5,6 +5,9 @@
     [reagent.core :as r]
     [todomvc.enflame :as flame]))
 
+; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
+(enable-console-print!)
+
 (defn input-field
   [{:keys [title on-save on-stop]}] ; #todo -> (with-map-vals [title on-save on-stop] ...)
   (let [text-val (r/atom title) ; local state

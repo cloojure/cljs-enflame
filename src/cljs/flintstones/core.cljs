@@ -42,11 +42,17 @@ Go ahead and edit it and see reloading in action. Again, or not.")
    [:hr] ])
 
 ;---------------------------------------------------------------------------------------------------
+
 ; Set up secretary navigation routing for the event-type filters
-(secretary/defroute "/"        []       (flame/dispatch-event [:set-showing :all]))
-(secretary/defroute "/:filter" [filter] (flame/dispatch-event [:set-showing (keyword filter)]))
-  ; #todo  make an `event` type & factory fn: (event :set-showing :all) instead of bare vec:  [:set-showing :all]
-  ; #todo fix secretary (-> bidi?) to avoid dup (:filter x2) and make more like pedestal
+(defn configure-routes! []
+  (secretary/defroute "/"        []       (flame/dispatch-event [:set-showing :all]))
+  (secretary/defroute "/:filter" [filter] (flame/dispatch-event [:set-showing (keyword filter)])))
+; #todo  make an `event` type & factory fn: (event :set-showing :all) instead of bare vec:  [:set-showing :all]
+; #todo fix secretary (-> bidi?) to avoid dup (:filter x2) and make more like pedestal
+    ; Although we use the secretary library below, that's mostly a historical accident. You might also consider using:
+    ;   - https://github.com/DomKM/silk
+    ;   - https://github.com/juxt/bidi
+    ; We don't have a strong opinion.
 
 ; Here we listen for URL change events and use secretary/dispatch to propotate them to [:set-showing ...]
 (def history
@@ -58,27 +64,25 @@ Go ahead and edit it and see reloading in action. Again, or not.")
     (.setEnabled true)))
 
 ;---------------------------------------------------------------------------------------------------
-(defonce counter (atom 0))
 
 (defn app-start []
   (events/register-handlers!)
-  ; Put an initial value into app-db. The event handler for `:initialise-db` can be found in `events.cljs`
+  (configure-routes!)
+  ; Put an initial value into app-db. The event handler for `:initialize-db` can be found in `events.cljs`
   ; Using the sync version of dispatch means that value is in place before we go onto the next step.
-  (flame/dispatch-event-sync [:initialise-db])
+  (flame/dispatch-event-sync [:initialize-db])
   ; #todo remove this - make a built-in :init that every event-handler verifies & waits for (top priority)
   ; #todo add concept of priority to event dispatch
 
   (r/render [simple-component] (js/document.getElementById "tgt-div")))
 
-(defn figwheel-reload []
-  ; optionally touch your app-state to force rerendering depending on your application
-  ; (swap! app-state update-in [:__figwheel_counter] inc)
-  (println "figwheel-reload/enter => " (swap! counter inc)))
+(defonce figwheel-reload-counter (atom 0))
+(defn figwheel-reload ; called from project.clj -> :cljsbuild -> :figwheel -> :on-jsload
+  []
+  (swap! figwheel-reload-counter inc)
+  (println "figwheel-reload/enter => " @figwheel-reload-counter))
 
-(when (zero? @counter)
-  (println "Initial load")
-  (figwheel-reload))
-(app-start)
+(app-start) ; ********** kicks off the app **********
 
 
 

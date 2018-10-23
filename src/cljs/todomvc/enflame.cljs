@@ -4,6 +4,14 @@
     [re-frame.loggers :as rflog]
     [re-frame.interceptor :as rfi]))
 
+; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
+(enable-console-print!)
+
+(defn swap-out!     ; #todo => tupelo/core.cljc
+  "Just like clojure.core/swap!, but returns the old value"
+  [tgt-atom swap-fn & args]
+  (let [[old -new-] (apply swap-vals! tgt-atom swap-fn args)]
+    old))
 
 (defn dissoc-in
   "A sane version of dissoc-in that will not delete intermediate keys.

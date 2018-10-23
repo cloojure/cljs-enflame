@@ -7,15 +7,16 @@
     [todomvc.enflame :as flame]
   ))
 
+; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
 (enable-console-print!)
 
-; context map (ctx):   { :coeffects   {:db {...}
-;                                      :other {...}}
-;                        :effects     {:db {...}
-;                                      :dispatch [...]}
-;                        ... ; other stuff }
+; context map (ctx) =>   { :coeffects   {:db {...}
+;                                        :other {...}}
+;                          :effects     {:db {...}
+;                                        :dispatch [...]}
+;                          ... ; other stuff }
 ; interceptors' :before fns should accumulate data into :coeffects map
-; interceptors' :after  fns should accumulate data into   :effects map
+; interceptors' :after  fns should process    data from   :effects map
 
 ;-----------------------------------------------------------------------------
 ; #todo unify interceptors/handlers:  all accept & return
@@ -33,8 +34,9 @@
 ; #todo :before    => :enter       to match pedestal
 ; #todo :after     => :leave
 
-; coeffects  =>  state-in
-;   effects  =>  state-out
+; #todo event handlers: document that `state` is coeffects/effects (ignore the difference)
+;     coeffects  =>  state-in
+;       effects  =>  state-out
 
 ; #todo   maybe rename interceptor chain to intc-chain, proc-chain, transform-chain
 
@@ -144,8 +146,7 @@
 (defn next-todo-id
   "Returns the next todo ID in a monolithic sequence. "
   []
-  (let [[old -new-] (swap-vals! todo-id-atom inc)]
-    old))
+  (flame/swap-out! todo-id-atom inc))
 
 ; -- Event Handlers ----------------------------------------------------------
 
@@ -155,13 +156,13 @@
 ; It establishes initial application state in `app-db`. That means merging:
 ;   1. Any todos stored in LocalStore (from the last session of this app)
 ;   2. Default initial values
-(defn initialise-db-handler [ state  -event- ] ; note that `state` is coeffects/effects (ignore the difference)
-    (js/console.log :initialise-db :enter state )
+(defn initialise-db-handler [state  -event-]
+    (js/console.log :initialize-db :enter state )
     (let [{:keys [db local-store-todos]} state
           result {:db todo-db/default-db ; #awt
                   ; #awt (assoc todo-db/default-db :todos local-store-todos)
                  }]
-      (js/console.log :initialise-db :leave result)
+      (js/console.log :initialize-db :leave result)
       result))
 
 ; #todo   => (event-handler-set!    :evt-name  (fn [& args] ...)) or subscribe-to  subscribe-to-event
@@ -241,7 +242,7 @@
       result))
 
 (defn register-handlers! []
-  (flame/event-handler-for! :initialise-db
+  (flame/event-handler-for! :initialize-db
     [local-store-todos-intc check-spec-intc]
     initialise-db-handler)
 
