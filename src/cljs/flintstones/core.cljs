@@ -40,8 +40,7 @@ Go ahead and edit it and see reloading in action. Again, or not.")
    [:hr]
    [:div
     [todomvc.components/todo-app]]
-   [:hr]
-   ])
+   [:hr] ])
 
 ;---------------------------------------------------------------------------------------------------
 ; Put an initial value into app-db.
@@ -59,6 +58,7 @@ Go ahead and edit it and see reloading in action. Again, or not.")
   ; #todo  make an `event` type & factory fn: (event :set-showing :all) instead of bare vec:  [:set-showing :all]
   ; #todo fix secretary (-> bidi?) to avoid dup (:filter x2) and make more like pedestal
 
+; Here we listen for URL change events and use secretary/dispatch to propotate them to [:set-showing ...]
 (def history
   (doto (History.)
     (events/listen EventType.NAVIGATE

@@ -68,6 +68,8 @@
       (for [todo-curr visible-todos]
         ^{:key (:id todo-curr)} [task-list-row todo-curr])]])) ; delegate to task-list-row component
 
+; These buttons are actually hrefs (hyperliks) that will cause broswser navigation observed by History
+; and propogated via secretary.
 (defn footer-controls []
   (let [[num-active num-done] (flame/from-topic [:footer-counts])
         showing               (flame/from-topic [:showing])

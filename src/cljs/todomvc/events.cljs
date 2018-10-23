@@ -7,6 +7,8 @@
     [todomvc.enflame :as flame]
   ))
 
+(enable-console-print!)
+
 ; context map (ctx):   { :coeffects   {:db {...}
 ;                                      :other {...}}
 ;                        :effects     {:db {...}
@@ -105,7 +107,6 @@
 (def check-spec-intc
   (rf/after ; An `after` interceptor receives `db` from (:effects ctx). Return value is ignored.
     (fn [db -event-]
-      (println :check-spec-intc :enter db)
       (check-and-throw :todomvc.db/db db))))
 
 ; -- Interceptor Chain ------------------------------------------------------
@@ -176,7 +177,7 @@
 ; usage:  (flame/dispatch-event [:set-showing :active])
 ; This event is dispatched when the user clicks on one of the 3 filter buttons at the bottom of the display.
   ; #todo #awt merge => global state (old cofx)
-(flame/event-handler-for! :set-showing
+(flame/event-handler-for! :set-showing ; receives events from URL changes via History/secretary
 
   ; only one interceptor
   [check-spec-intc]  ; after event handler runs, check app-db for correctness. Does it still match Spec?
