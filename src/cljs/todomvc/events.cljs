@@ -145,76 +145,69 @@
 ;
 ; To fully understand this advanced topic, you'll have to read the tutorials
 ; and look at the bottom of `db.cljs` for the `:local-store-todos` cofx registration.
-(flame/event-handler-for! :initialise-db
-  ; #todo   => (event-handler-set!    :evt-name  (fn [& args] ...)) or subscribe-to  subscribe-to-event
-  ; #todo   => (event-handler-clear!  :evt-name)
-  ; #todo option for log wrapper (with-event-logging  logger-fn
-  ; #todo                          (event-handler-set! :evt-name  (fn [& args] ...)))
 
-  ; the interceptor chain (a vector of 2 interceptors in this case)
-  [(rf/inject-cofx :local-store-todos) ; gets todos from localstore, and puts value into coeffects arg
-   check-spec-intc  ; after event handler runs, check app-db for correctness. Does it still match Spec?
-   ]
-  ; #todo  context -> event
-  ; #todo    :event/id
-  ; #todo    :event/params
-  ; #todo    coeffects -> inputs    ; data
-  ; #todo      effects -> outputs   ; result
-
-  ; the event handler being registered
-  (fn [ state  -event- ] ; note that `state` is coeffects/effects (ignore the difference)
+(defn initialise-db-handler [ state  -event- ] ; note that `state` is coeffects/effects (ignore the difference)
     (js/console.log :initialise-db )
     (let [{:keys [db local-store-todos]} state
           result {:db todo-db/default-db ; #awt
                   ; #awt (assoc todo-db/default-db :todos local-store-todos)
                  }]
       (js/console.log :initialise-db :leave result)
-      result)))   ; all hail the new state to be put in app-db
+      result))
+
+; #todo   => (event-handler-set!    :evt-name  (fn [& args] ...)) or subscribe-to  subscribe-to-event
+; #todo   => (event-handler-clear!  :evt-name)
+; #todo option for log wrapper (with-event-logging  logger-fn
+; #todo                          (event-handler-set! :evt-name  (fn [& args] ...)))
+; #todo  context -> event
+; #todo    :event/id
+; #todo    :event/params
+; #todo    coeffects -> inputs    ; data
+; #todo      effects -> outputs   ; result
 
 ; Need a way to document event names and args
 ;    #todo (defevent set-showing [state])
-
-; usage:  (flame/dispatch-event [:set-showing :active])
-; This event is dispatched when the user clicks on one of the 3 filter buttons at the bottom of the display.
-  ; #todo #awt merge => global state (old cofx)
-(flame/event-handler-for! :set-showing ; receives events from URL changes via History/secretary
-
-  ; only one interceptor
-  [check-spec-intc]  ; after event handler runs, check app-db for correctness. Does it still match Spec?
-
-  ; handler
-  (fn [state [_ new-filter-kw]]     ; new-filter-kw is one of :all, :active or :done
-    (assoc-in state [:db :showing] new-filter-kw)))
-
-
 ; #todo event handlers take only params-map (fn [params :- tsk/Map] ...)
-(flame/event-handler-for! :add-todo
-  ; Use the standard interceptors, defined above, which we use for all todos-modifying
-  ; event handlers. Looks after writing todos to LocalStore, etc.
-  std-interceptors
 
-  ; The event handler function.
-  ; The "path" interceptor in `std-interceptors` means 1st parameter is the
-  ; value at `:todos` path within `db`, rather than the full `db`.
-  ; And, further, it means the event handler returns just the value to be
-  ; put into the `[:todos]` path, and not the entire `db`.
-  ; So, againt, a path interceptor acts like clojure's `update-in`
-  (fn [state [-e- text]] ; => {:global-state xxx   :event {:event-name xxx  :arg1 yyy  :arg2 zzz ...}}
+(defn set-showing-handler [state [_ new-filter-kw]]     ; new-filter-kw is one of :all, :active or :done
+    (assoc-in state [:db :showing] new-filter-kw))
+
+(defn add-todo-handler [state [-e- text]] ; => {:global-state xxx   :event {:event-name xxx  :arg1 yyy  :arg2 zzz ...}}
     (update-in state [:db :todos]  ; #todo make this be (with-path state [:db :todos] ...) macro
       (fn [todos]                 ; #todo kill this part
         (let [id     (allocate-next-id todos)
               result (assoc-in todos [id] {:id id :title text :done false})]
           (js/console.info :add-todo :leave result)
-          result)))))
-
-(flame/event-handler-for! :toggle-done
-  std-interceptors
-  (fn [state [-e- id]]
+          result))))
+(defn toggle-done-handler [state [-e- id]]
     (update-in state [:db :todos]
       (fn [todos]
         (let [result (update-in todos [id :done] not)]
           (js/console.info :toggle-done :leave result)
-          result)))))
+          result))))
+
+(flame/event-handler-for! :initialise-db
+  ; interceptor chain
+  [(rf/inject-cofx :local-store-todos) ; gets todos from localstore, and puts value into coeffects arg
+   check-spec-intc] ; after event handler runs, check app-db for correctness. Does it still match Spec?
+  initialise-db-handler)
+
+; usage:  (flame/dispatch-event [:set-showing :active])
+; This event is dispatched when the user clicks on one of the 3 filter buttons at the bottom of the display.
+  ; #todo #awt merge => global state (old cofx)
+
+(flame/event-handler-for! :set-showing ; receives events from URL changes via History/secretary
+  [check-spec-intc] ; after event handler runs, check app-db for correctness. Does it still match Spec?
+  set-showing-handler)
+
+(flame/event-handler-for! :add-todo
+  std-interceptors
+  add-todo-handler )
+
+(flame/event-handler-for! :toggle-done
+  std-interceptors
+  toggle-done-handler
+  )
 
 (flame/event-handler-for! :save
   std-interceptors

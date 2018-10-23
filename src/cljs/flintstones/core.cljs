@@ -1,20 +1,19 @@
 (ns flintstones.core
   (:require
     [devtools.core :as devtools]
-    [goog.events :as events]
+    [goog.events]
     [flintstones.slate :as slate]
     [oops.core :as oops]
     [reagent.core :as r]
     [secretary.core :as secretary]
     [todomvc.components]
     [todomvc.enflame :as flame]
-    [todomvc.events] ; These two are only required to make the compiler
-    [todomvc.topics] ; load them (see docs/Basic-App-Structure.md)
+    [todomvc.events :as events] ; These two are only required to make the compiler
+    [todomvc.topics :as topics] ; load them (see docs/Basic-App-Structure.md)
     )
   (:require-macros [secretary.core :as secretary])
   (:import [goog History]
-           [goog.history EventType])
-  )
+           [goog.history EventType]) )
 
 ; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
 (enable-console-print!)
@@ -43,16 +42,7 @@ Go ahead and edit it and see reloading in action. Again, or not.")
    [:hr] ])
 
 ;---------------------------------------------------------------------------------------------------
-; Put an initial value into app-db.
-; The event handler for `:initialise-db` can be found in `events.cljs`
-; Using the sync version of dispatch means that value is in
-; place before we go onto the next step.
-(flame/dispatch-event-sync [:initialise-db])
-; #todo remove this - make a built-in :init that every event-handler verifies & waits for (top priority)
-; #todo add concept of priority to event dispatch
-
-;---------------------------------------------------------------------------------------------------
-; Set up secretary routing for the event-type filters
+; Set up secretary navigation routing for the event-type filters
 (secretary/defroute "/"        []       (flame/dispatch-event [:set-showing :all]))
 (secretary/defroute "/:filter" [filter] (flame/dispatch-event [:set-showing (keyword filter)]))
   ; #todo  make an `event` type & factory fn: (event :set-showing :all) instead of bare vec:  [:set-showing :all]
@@ -61,7 +51,7 @@ Go ahead and edit it and see reloading in action. Again, or not.")
 ; Here we listen for URL change events and use secretary/dispatch to propotate them to [:set-showing ...]
 (def history
   (doto (History.)
-    (events/listen EventType.NAVIGATE
+    (goog.events/listen EventType.NAVIGATE
       (fn [event]
         (println :history event)
         (secretary/dispatch! (.-token event))))
@@ -71,6 +61,12 @@ Go ahead and edit it and see reloading in action. Again, or not.")
 (defonce counter (atom 0))
 
 (defn app-start []
+  ; Put an initial value into app-db. The event handler for `:initialise-db` can be found in `events.cljs`
+  ; Using the sync version of dispatch means that value is in place before we go onto the next step.
+  (flame/dispatch-event-sync [:initialise-db])
+  ; #todo remove this - make a built-in :init that every event-handler verifies & waits for (top priority)
+  ; #todo add concept of priority to event dispatch
+
   (r/render [simple-component] (js/document.getElementById "tgt-div")))
 
 (defn figwheel-reload []
