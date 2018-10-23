@@ -169,34 +169,44 @@
 ;    #todo (defevent set-showing [state])
 ; #todo event handlers take only params-map (fn [params :- tsk/Map] ...)
 
-(defn set-showing-handler [state [_ new-filter-kw]]     ; new-filter-kw is one of :all, :active or :done
+; usage:  (flame/dispatch-event [:set-showing :active])
+; This event is dispatched when the user clicks on one of the 3 filter buttons at the bottom of the display.
+; #todo #awt merge => global state (old cofx)
+
+(defn set-showing-handler
+  [state [_ new-filter-kw]]     ; new-filter-kw is one of :all, :active or :done
     (assoc-in state [:db :showing] new-filter-kw))
 
-(defn add-todo-handler [state [-e- text]] ; => {:global-state xxx   :event {:event-name xxx  :arg1 yyy  :arg2 zzz ...}}
+(defn add-todo-handler
+  [state [-e- text]] ; => {:global-state xxx   :event {:event-name xxx  :arg1 yyy  :arg2 zzz ...}}
     (update-in state [:db :todos]  ; #todo make this be (with-path state [:db :todos] ...) macro
       (fn [todos]                 ; #todo kill this part
         (let [id     (allocate-next-id todos)
               result (assoc-in todos [id] {:id id :title text :done false})]
           (js/console.info :add-todo :leave result)
           result))))
-(defn toggle-done-handler [state [-e- id]]
+(defn toggle-done-handler
+  [state [-e- id]]
     (update-in state [:db :todos]
       (fn [todos]
         (let [result (update-in todos [id :done] not)]
           (js/console.info :toggle-done :leave result)
           result))))
 
-(defn save-handler [state [-e- id title]]
+(defn save-handler
+  [state [-e- id title]]
     (let [result (assoc-in state [:db :todos id :title] title)]
       (js/console.info :save :leave result )
       result))
 
-(defn delete-todo-handler [state [-e- id]]
+(defn delete-todo-handler
+  [state [-e- id]]
     (let [result (flame/dissoc-in state [:db :todos id])]
       (js/console.info :delete-todo :leave result )
       result))
 
-(defn clear-completed-handler [state -event-]
+(defn clear-completed-handler
+  [state -event-]
     (let [todos     (get-in state [:db :todos])
           done-ids  (->> (vals todos) ; find id's for todos where (:done -> true)
                       (filter :done)
@@ -206,7 +216,8 @@
       (js/console.info :clear-completed :leave result)
       result))
 
-(defn complete-all-toggle-handler [state -event-]
+(defn complete-all-toggle-handler
+  [state -event-]
     (let [todos     (get-in state [:db :todos])
           new-done  (not-every? :done (vals todos)) ; work out: toggle true or false?
           todos-new (reduce #(assoc-in %1 [%2 :done] new-done)
@@ -216,16 +227,12 @@
       (js/console.info :complete-all-toggle :leave result)
       result))
 
-(defn register-handlers! []
+(defn register-handlers!
+  []
   (flame/event-handler-for! :initialise-db
-    ; interceptor chain
-    [(rf/inject-cofx :local-store-todos) ; gets todos from localstore, and puts value into coeffects arg
-     check-spec-intc] ; after event handler runs, check app-db for correctness. Does it still match Spec?
+    [(rf/inject-cofx :local-store-todos)
+     check-spec-intc]
     initialise-db-handler)
-
-  ; usage:  (flame/dispatch-event [:set-showing :active])
-  ; This event is dispatched when the user clicks on one of the 3 filter buttons at the bottom of the display.
-  ; #todo #awt merge => global state (old cofx)
 
   (flame/event-handler-for! :set-showing ; receives events from URL changes via History/secretary
     [check-spec-intc] ; after event handler runs, check app-db for correctness. Does it still match Spec?
