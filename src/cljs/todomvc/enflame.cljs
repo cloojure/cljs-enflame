@@ -41,7 +41,6 @@
       (throw (ex-info "get-in-strict: path not found" {:map map :path path})))
     result))
 
-
 ;---------------------------------------------------------------------------------------------------
 
 ; #todo need macro  (definterceptor todos-done {:name ...   :enter ...   :leave ...} )
@@ -58,7 +57,26 @@
 
 (defn dispatch-event-sync [& args] (apply rf/dispatch-sync args) )
 
+; Define :db topic
+(rf/reg-sub :db
+  (fn [db -query-]
+    db))
+
 (defn define-topic! [& forms] (apply rf/reg-sub forms))
+
+(defn define-topic-compact!
+  [topic-id input-topics tx-fn]
+  (when-not (vector? input-topics) (throw (ex-info "input-topics must be a vector" input-topics)))
+  (when-not (every? keyword? input-topics) (throw (ex-info "topic values must be keywords" input-topics)))
+  (when-not (fn? tx-fn) (throw (ex-info "tx-fn must be a function" tx-fn)))
+  (let [sugar-forms (vec (apply concat
+                           (for [input-topic input-topics]
+                             [:<- [input-topic]])))
+        >> (js/console.log :sugar-forms sugar-forms)
+        args-vec    (vec (concat [topic-id] sugar-forms [tx-fn]))]
+    (js/console.log :args-vec args-vec)
+    (apply rf/reg-sub args-vec)))
+
 
 ; #todo need macro  (with-path ctx [:db :todos] ...) ; extract and replace in ctx
 ; #todo need macro  (with-db ctx ...) ; hardwired for path of [:db]

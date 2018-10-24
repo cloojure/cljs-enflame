@@ -57,7 +57,7 @@
            :on-stop #(reset! editing false)}])])))
 
 (defn task-list []
-  (let [visible-todos (flame/from-topic [:visible-todos])
+  (let [visible-todos (flame/from-topic [:visible-todos-compact])
         all-complete? (flame/from-topic [:all-complete?])]
     [:section#main
      [:input#toggle-all

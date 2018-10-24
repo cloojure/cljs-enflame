@@ -4,16 +4,17 @@
     [todomvc.enflame :as flame] ))
 
 (defn register-topics! []
+
   (flame/define-topic!
     :showing
-    (fn [db _]
+    (fn [db -query-]
       (:showing db)))
 
   ; #todo macro to insert topic as fn-name;  :sorted-todos => (fn sorted-todos-fn ...)
   ; #todo (flame/define-topic! :sorted-todos ...) => (fn sorted-todos-fn ...)
   (flame/define-topic!
     :sorted-todos
-    (fn [db _]
+    (fn [db -query-]
       (:todos db)))
 
   ; -------------------------------------------------------------------------------------
@@ -37,7 +38,7 @@
     ; being the two values supplied in the originating `(rf/subscribe X Y)`.
     ; X will be the query vector and Y is an advanced feature and out of scope
     ; for this explanation.
-    (fn [query-v _] ; signal function
+    (fn [query-v -query-] ; signal function
       (rf/subscribe [:sorted-todos])) ; returns a single input signal
 
     ; This 2nd fn does the computation. Data values in, derived data out.
@@ -50,8 +51,8 @@
     ;  - the input signals (a single item, a vector or a map)
     ;  - the query vector supplied to query-v  (the query vector argument to the "rf/subscribe")
     ;  - the 3rd one is for advanced cases, out of scope for this discussion.
-    (fn [sorted-todos query-v _] ; computation function
-      (vals sorted-todos))) ; #todo sink ?
+    (fn [sorted-todos -query-]
+      (vals sorted-todos)))
 
   ; So here we define the handler for another intermediate node.
   ; This time the computation involves two input signals. As a result note:
@@ -69,6 +70,15 @@
 
     ; Computation Function
     (fn [[todos showing] -query-] ; that 1st parameter is a 2-vector of values
+      (let [filter-fn (condp = showing
+                        :active (complement :done)
+                        :done :done
+                        :all identity)]
+        (filter filter-fn todos))))
+
+  (flame/define-topic-compact! :visible-todos-compact
+    [:todos :showing]
+    (fn [[todos showing] -query-]
       (let [filter-fn (condp = showing
                         :active (complement :done)
                         :done :done
