@@ -66,8 +66,9 @@ Go ahead and edit it and see reloading in action. Again, or not.")
 ;---------------------------------------------------------------------------------------------------
 
 (defn app-start []
-  (events/register-handlers!)
   (configure-routes!)
+  (events/register-handlers!)
+  (topics/register-topics!)
   ; Put an initial value into app-db. The event handler for `:initialize-db` can be found in `events.cljs`
   ; Using the sync version of dispatch means that value is in place before we go onto the next step.
   (flame/dispatch-event-sync [:initialize-db])
