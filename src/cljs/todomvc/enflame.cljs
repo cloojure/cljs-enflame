@@ -57,10 +57,10 @@
 
 (defn dispatch-event-sync [& args] (apply rf/dispatch-sync args) )
 
-; Define :db topic
-(rf/reg-sub :db
-  (fn [db -query-]
-    db))
+;****************************************************************
+; Define built-in :db topic
+(rf/reg-sub :db (fn [db -query-] db))
+;****************************************************************
 
 (defn define-topic-old! [& forms] (apply rf/reg-sub forms))
 

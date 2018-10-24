@@ -5,78 +5,24 @@
 
 (defn register-topics! []
 
-  (flame/define-topic-old!
-    :showing
+  (flame/define-topic! :showing
+    [:db]
     (fn [db -query-]
       (:showing db)))
 
   ; #todo macro to insert topic as fn-name;  :sorted-todos => (fn sorted-todos-fn ...)
   ; #todo (flame/define-topic! :sorted-todos ...) => (fn sorted-todos-fn ...)
-  (flame/define-topic-old!
-    :sorted-todos
+  (flame/define-topic! :sorted-todos
+    [:db]
     (fn [db -query-]
       (:todos db)))
 
-  ; -------------------------------------------------------------------------------------
-  ; Layer 3
-  ;
-  ; rf/reg-sub allows you to supply:
-  ;
-  ;   1. a function which returns the input signals. It can return either a single signal or
-  ;      a vector of signals, or a map where the values are the signals.
-  ;
-  ;   2. a function which does the computation. It takes input values and produces a new
-  ;      derived value.
-  ;
-  ; In the two simple examples at the top, we only supplied the 2nd of these functions.
-  ; But now we are dealing with intermediate (layer 3) nodes, we'll need to provide both fns.
-  ;
-  (flame/define-topic-old!
-    :todos          ; usage:  (rf/subscribe [:todos])
-    ; This function returns the input signals. In this case, it returns a single signal.
-    ; Although not required in this example, it is called with two parameters
-    ; being the two values supplied in the originating `(rf/subscribe X Y)`.
-    ; X will be the query vector and Y is an advanced feature and out of scope
-    ; for this explanation.
-    (fn [query-v -query-] ; signal function
-      (rf/subscribe [:sorted-todos])) ; returns a single input signal
-
-    ; This 2nd fn does the computation. Data values in, derived data out.
-    ; It is the same as the two simple subscription handlers up at the top.
-    ; Except they took the value in app-db as their first argument and, instead,
-    ; this function takes the value delivered by another input signal, supplied by the
-    ; function above: (rf/subscribe [:sorted-todos])
-    ;
-    ; Subscription handlers can take 3 parameters:
-    ;  - the input signals (a single item, a vector or a map)
-    ;  - the query vector supplied to query-v  (the query vector argument to the "rf/subscribe")
-    ;  - the 3rd one is for advanced cases, out of scope for this discussion.
+  (flame/define-topic! :todos
+    [:sorted-todos]
     (fn [sorted-todos -query-]
       (vals sorted-todos)))
 
-  ; So here we define the handler for another intermediate node.
-  ; This time the computation involves two input signals. As a result note:
-  ;   - the first function (which returns the signals) returns a 2-vector
-  ;   - the second function (which is the computation) destructures this 2-vector as its first parameter
-  (flame/define-topic-old!
-    :visible-todos
-
-    ; Signal Function
-    ; Tells us what inputs flow into this node.
-    ; Returns a vector of two input signals (in this case)
-    (fn [query-v _]
-      [(rf/subscribe [:todos])
-       (rf/subscribe [:showing])])
-
-    ; Computation Function
-    (fn [[todos showing] -query-] ; that 1st parameter is a 2-vector of values
-      (let [filter-fn (condp = showing
-                        :active (complement :done)
-                        :done :done
-                        :all identity)]
-        (filter filter-fn todos))))
-
-  (flame/define-topic! :visible-todos-compact
+  (flame/define-topic! :visible-todos
     [:todos :showing]
     (fn [[todos showing] -query-]
       (let [filter-fn (condp = showing
