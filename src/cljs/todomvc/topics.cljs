@@ -5,14 +5,14 @@
 
 (defn register-topics! []
 
-  (flame/define-topic!
+  (flame/define-topic-old!
     :showing
     (fn [db -query-]
       (:showing db)))
 
   ; #todo macro to insert topic as fn-name;  :sorted-todos => (fn sorted-todos-fn ...)
   ; #todo (flame/define-topic! :sorted-todos ...) => (fn sorted-todos-fn ...)
-  (flame/define-topic!
+  (flame/define-topic-old!
     :sorted-todos
     (fn [db -query-]
       (:todos db)))
@@ -31,7 +31,7 @@
   ; In the two simple examples at the top, we only supplied the 2nd of these functions.
   ; But now we are dealing with intermediate (layer 3) nodes, we'll need to provide both fns.
   ;
-  (flame/define-topic!
+  (flame/define-topic-old!
     :todos          ; usage:  (rf/subscribe [:todos])
     ; This function returns the input signals. In this case, it returns a single signal.
     ; Although not required in this example, it is called with two parameters
@@ -58,7 +58,7 @@
   ; This time the computation involves two input signals. As a result note:
   ;   - the first function (which returns the signals) returns a 2-vector
   ;   - the second function (which is the computation) destructures this 2-vector as its first parameter
-  (flame/define-topic!
+  (flame/define-topic-old!
     :visible-todos
 
     ; Signal Function
@@ -76,7 +76,7 @@
                         :all identity)]
         (filter filter-fn todos))))
 
-  (flame/define-topic-compact! :visible-todos-compact
+  (flame/define-topic! :visible-todos-compact
     [:todos :showing]
     (fn [[todos showing] -query-]
       (let [filter-fn (condp = showing
@@ -92,7 +92,7 @@
   ;       <forms> ))
 
   ; Here is the example above rewritten using the sugar.
-  (flame/define-topic! :visible-todos-with-sugar
+  (flame/define-topic-old! :visible-todos-with-sugar
     :<- [:todos]
     :<- [:showing]
     (fn [[todos showing] -query-]
@@ -102,17 +102,17 @@
                         :all identity)]
         (filter filter-fn todos))))
 
-  (flame/define-topic! :all-complete?
+  (flame/define-topic-old! :all-complete?
     :<- [:todos]
     (fn [todos -query-]
       (every? :done todos)))
 
-  (flame/define-topic! :completed-count
+  (flame/define-topic-old! :completed-count
     :<- [:todos]
     (fn [todos -query-]
       (count (filter :done todos))))
 
-  (flame/define-topic! :footer-counts
+  (flame/define-topic-old! :footer-counts
     :<- [:todos]
     :<- [:completed-count]
     (fn [[todos completed] -query-]

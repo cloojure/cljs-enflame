@@ -62,9 +62,9 @@
   (fn [db -query-]
     db))
 
-(defn define-topic! [& forms] (apply rf/reg-sub forms))
+(defn define-topic-old! [& forms] (apply rf/reg-sub forms))
 
-(defn define-topic-compact!
+(defn define-topic!
   [topic-id input-topics tx-fn]
   (when-not (vector? input-topics) (throw (ex-info "input-topics must be a vector" input-topics)))
   (when-not (every? keyword? input-topics) (throw (ex-info "topic values must be keywords" input-topics)))
