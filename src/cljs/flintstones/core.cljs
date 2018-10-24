@@ -6,7 +6,7 @@
     [oops.core :as oops]
     [reagent.core :as r]
     [secretary.core :as secretary]
-    [todomvc.components]
+    [todomvc.components :as gui]
     [todomvc.enflame :as flame]
     [todomvc.events :as events] ; These two are only required to make the compiler
     [todomvc.topics :as topics] ; load them (see docs/Basic-App-Structure.md)
@@ -38,7 +38,7 @@ Go ahead and edit it and see reloading in action. Again, or not.")
      [:span {:style {:color "red"}} " and red"] " text."]]
    [:hr]
    [:div
-    [todomvc.components/root]]
+    [gui/root]]
    [:hr] ])
 
 ;---------------------------------------------------------------------------------------------------

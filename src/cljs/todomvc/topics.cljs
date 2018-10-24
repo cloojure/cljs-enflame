@@ -1,52 +1,22 @@
 (ns todomvc.topics
   (:require
-    [todomvc.enflame :as flame]
-    [re-frame.core :as rf]))
-
-; -------------------------------------------------------------------------------------
-; Layer 2
-;
-; See https://github.com/Day8/re-frame/blob/master/docs/SubscriptionInfographic.md
-;
-; Layer 2 query functions are "extractors". They take from `app-db`
-; and don't do any further computation on the extracted values. Any further
-; computation should happen in Layer 3.
-; Why?  It is an efficiency thing. Every Layer 2 subscription will rerun any time
-; that `app-db` changes (in any way). As a result, we want Layer 2 to be trivial.
+    [re-frame.core :as rf]
+    [todomvc.enflame :as flame] ))
 
 (flame/define-topic!
-  :showing ; usage:   (rf/subscribe [:showing])
-  (fn [db _]        ; db is the (map) value stored in the app-db atom
-    (:showing db))) ; extract a value from the application state
+  :showing
+  (fn [db _]
+    (:showing db)))
 
-; Next, the registration of a similar handler is done in two steps. First, we `defn` a pure handler
-; function.  Then, we use `rf/reg-sub` to register it. Two steps. This is different to
-; that first registration, above, which was done in one step using an anonymous function.
-(defn sorted-todos-fn [db _]
-  (:todos db))
-
+; #todo macro to insert topic as fn-name;  :sorted-todos => (fn sorted-todos-fn ...)
+; #todo (flame/define-topic! :sorted-todos ...) => (fn sorted-todos-fn ...)
 (flame/define-topic!
   :sorted-todos
-  sorted-todos-fn)    ; usage: (rf/subscribe [:sorted-todos])
+  (fn [db _]
+    (:todos db)))
 
 ; -------------------------------------------------------------------------------------
 ; Layer 3
-;
-; See https://github.com/Day8/re-frame/blob/master/docs/SubscriptionInfographic.md
-;
-; A subscription handler is a function which is re-run when its input signals
-; change. Each time it is rerun, it produces a new output (return value).
-;
-; In the simple case, app-db is the only input signal, as was the case in the two
-; simple subscriptions above. But many subscriptions are not directly dependent on
-; app-db, and instead, depend on a value derived from app-db.
-;
-; Such handlers represent "intermediate nodes" in a signal graph.  New values emanate
-; from app-db, and flow out through a signal graph, into and out of these intermediate
-; nodes, before a leaf subscription delivers data into views which render data as hiccup.
-;
-; When writing and registering the handler for an intermediate node, you must nominate
-; one or more input signals (typically one or two).
 ;
 ; rf/reg-sub allows you to supply:
 ;
@@ -68,7 +38,6 @@
   ; for this explanation.
   (fn [query-v _]   ; signal function
     (rf/subscribe [:sorted-todos]))    ; returns a single input signal
-  ; #todo source ?
 
   ; This 2nd fn does the computation. Data values in, derived data out.
   ; It is the same as the two simple subscription handlers up at the top.
@@ -98,53 +67,24 @@
      (rf/subscribe [:showing])])
 
   ; Computation Function
-  (fn [[todos showing] _]   ; that 1st parameter is a 2-vector of values
+  (fn [[todos showing] -query-]   ; that 1st parameter is a 2-vector of values
     (let [filter-fn (condp = showing
                       :active (complement :done)
                       :done   :done
                       :all    identity)]
       (filter filter-fn todos))))
 
-; -------------------------------------------------------------------------------------
-; Hey, wait on!!
-;
-; How did those two simple Layer 2 registrations at the top work?
-; We only supplied one function in those registrations, not two?
-; Very observant of you, I'm glad you asked.
-; When the signal-returning-fn is omitted, rf/reg-sub provides a default,
-; and it looks like this:
-;
-;   (fn [_ _]
-;     re-frame.db/app-db)
-;
-; It returns one signal, and that signal is app-db itself.
-;
-; So the two simple registrations at the top didn't need to provide a signal-fn,
-; because they operated only on the value in app-db, supplied as 'db' in the 1st argument.
-;
-; So that, by the way, is why Layer 2 subscriptions always re-calculate when `app-db`
-; changes - `app-db` is literally their input signal.
-
-; #todo predefine a built-in topic :app-state (nee app-db). All user-defined topics are like:
+; #todo predefine a built-in topic :rf/db. All user-defined topics are like:
 ;   (rs/define-topic!
-;     [:rs/app-state :todos :showing ...]
-;     (fn [  < auto-destructure [app-state todos showing] > > > >
-;         query-vec 3rd-param]
+;     [:rs/db :todos :showing]
+;     (fn [[db todos showing] -query-] ; #todo add auto-destructure
 ;       <forms> ))
 
-; -------------------------------------------------------------------------------------
-; SUGAR ?
-; Now for some syntactic sugar...
-; The purpose of the sugar is to remove boilerplate noise. To distill to the essential
-; in 90% of cases.
-; Because it is so common to nominate 1 or more input signals,
-; rf/reg-sub provides some macro sugar so you can nominate a very minimal
-; vector of input signals. The 1st function is not needed.
 ; Here is the example above rewritten using the sugar.
 (flame/define-topic! :visible-todos-with-sugar
   :<- [:todos]
   :<- [:showing]
-  (fn [[todos showing] _]
+  (fn [[todos showing] -query-]
     (let [filter-fn (case showing
                       :active (complement :done)
                       :done   :done
@@ -153,18 +93,18 @@
 
 (flame/define-topic! :all-complete?
   :<- [:todos]
-  (fn [todos _]
+  (fn [todos -query-]
     (every? :done todos)))
 
 (flame/define-topic! :completed-count
   :<- [:todos]
-  (fn [todos _]
+  (fn [todos -query-]
     (count (filter :done todos))))
 
 (flame/define-topic! :footer-counts
   :<- [:todos]
   :<- [:completed-count]
-  (fn [[todos completed] _]
+  (fn [[todos completed] -query-]
     [(- (count todos) completed) completed]))
 
 
