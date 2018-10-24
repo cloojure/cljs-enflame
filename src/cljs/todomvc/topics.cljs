@@ -29,7 +29,6 @@
                         :all identity)]
         (filter filter-fn todos))))
 
-
   (flame/define-topic! :all-complete?
     [:todos]
     (fn [todos -query-]

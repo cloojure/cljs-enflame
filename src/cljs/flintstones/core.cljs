@@ -28,20 +28,6 @@ Go ahead and edit it and see reloading in action. Again, or not.")
 ; -- Debugging aids ----------------------------------------------------------
 (devtools/install!) ; we love https://github.com/binaryage/cljs-devtools
 
-(defn simple-component []
-  [:div
-   [:hr]
-   [:div
-    [:p "I am a component!"]
-    [:p.someclass
-     "I have " [:strong "bold"]
-     [:span {:style {:color "red"}} " and red"] " text."]]
-   [:hr]
-   [:div
-    [gui/root]]
-   [:hr] ])
-
-;---------------------------------------------------------------------------------------------------
 
 ; Set up secretary navigation routing for the event-type filters
 (defn configure-routes! []
@@ -75,7 +61,7 @@ Go ahead and edit it and see reloading in action. Again, or not.")
   ; #todo remove this - make a built-in :init that every event-handler verifies & waits for (top priority)
   ; #todo add concept of priority to event dispatch
 
-  (r/render [simple-component] (js/document.getElementById "tgt-div")))
+  (r/render [gui/root] (js/document.getElementById "tgt-div")))
 
 (defonce figwheel-reload-counter (atom 0))
 (defn figwheel-reload ; called from project.clj -> :cljsbuild -> :figwheel -> :on-jsload

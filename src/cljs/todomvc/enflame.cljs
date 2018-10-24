@@ -109,6 +109,10 @@
 
 (defn dispatch-event-sync [& args] (apply rf/dispatch-sync args) )
 
+; #todo (dispatch-later state event-vec)
+; #todo    converts any existing :dispatch [xxx] => :dispatch-n [ [xxx] ]
+; #todo    appends new event-vec to :dispatch-n [...]       returns updated <state>
+
 ;****************************************************************
 ; Define built-in :db topic
 (rf/reg-sub :db (fn [db -query-] db))

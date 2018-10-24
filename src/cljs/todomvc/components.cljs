@@ -100,7 +100,7 @@
      :on-save     #(when-not (empty? (str/trim %))
                      (flame/dispatch-event [:add-todo %]))}]])
 
-(defn root []
+(defn todo-root []
   [:div
    [:section#todoapp
     [task-entry]
@@ -109,3 +109,19 @@
     [footer-controls]]
    [:footer#info
     [:p "Double-click to edit a todo"]]])
+
+;---------------------------------------------------------------------------------------------------
+
+(defn root []       ; was simple-component
+  [:div
+   [:hr]
+   [:div
+    [:p "I am a component!"]
+    [:p.someclass
+     "I have " [:strong "bold"]
+     [:span {:style {:color "red"}} " and red"] " text."]]
+   [:hr]
+   [:div
+    [todo-root]]
+   [:hr] ])
+
