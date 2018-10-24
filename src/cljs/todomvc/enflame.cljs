@@ -75,6 +75,11 @@
       (= 1 num-keys) (dissoc the-map key-to-clear)
       :else (update-in the-map parent-keys dissoc key-to-clear))))
 
+(defn ->sorted-map  ; #todo -> tupelo/core.cljc
+  "Convert the arg into a sorted-map"
+  [arg]
+  (into (sorted-map) arg))
+
 ;---------------------------------------------------------------------------------------------------
 (def ascii-code-return 13) ; #todo => tupelo.ascii
 (def ascii-code-escape 27)

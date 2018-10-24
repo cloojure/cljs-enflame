@@ -28,9 +28,6 @@
                  (s/map-of ::id ::todo) ; in this map, each todo is keyed by its :id
                  #(instance? PersistentTreeMap %))) ; is a sorted-map (not just a map)
 
-; (s/def ::todos (s/map-of ::id ::todo)) ; in this map, each todo is keyed by its :id
-
-
 (s/def ::showing    ; what todos are shown to the user?
   #{:all            ; all todos are shown
     :active         ; only todos whose :done is false
@@ -57,6 +54,7 @@
 (defn todos->local-store
   "Puts todos into localStorage"
   [todos]
-  (js/console.info :todos->local-store todos)
-  (.setItem js/localStorage js-localstore-key (str todos))) ; sorted-map written as an EDN map
+  ; (js/console.info :todos->local-store todos)
+  (let [edn-str (str todos)]
+    (.setItem js/localStorage js-localstore-key edn-str))) ; sorted-map written as an edn string
 

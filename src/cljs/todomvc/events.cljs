@@ -12,11 +12,12 @@
 (def local-store-todos-intc ; injects state with todos from the localstore.
   (flame/interceptor
     {:id    :local-store-todos-intc
-     :enter (fn [state] ; read in todos from localstore, and process into a sorted map
-              (let [loaded-value     (some->> (.getItem js/localStorage todo-db/js-localstore-key)
+     :enter (fn     ; read in todos from localstore, and process into a sorted map
+              [state]
+              (let [item-read        (.getItem js/localStorage todo-db/js-localstore-key)
+                    loaded-value     (some-> item-read
                                        (cljs.reader/read-string))
-                    todos-sorted     (into (sorted-map) (flame/get-in-strict loaded-value [:todos]))
-                    loaded-value-out (into loaded-value {:todos todos-sorted})
+                    loaded-value-out (update-in loaded-value [:todos] flame/->sorted-map)
                     state-out        (into state {:local-store-todos loaded-value-out})]
                 state-out))
      :leave identity}))
