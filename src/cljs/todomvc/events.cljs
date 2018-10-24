@@ -2,7 +2,6 @@
   (:require
     [cljs.spec.alpha :as s]
     [re-frame.core :as rf]
-    [re-frame.std-interceptors :as rfstd]
     [todomvc.db :as todo-db]
     [todomvc.enflame :as flame] ))
 
