@@ -72,9 +72,7 @@
   (let [sugar-forms (vec (apply concat
                            (for [input-topic input-topics]
                              [:<- [input-topic]])))
-        >> (js/console.log :sugar-forms sugar-forms)
         args-vec    (vec (concat [topic-id] sugar-forms [tx-fn]))]
-    (js/console.log :args-vec args-vec)
     (apply rf/reg-sub args-vec)))
 
 
