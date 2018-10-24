@@ -62,8 +62,8 @@
 (rf/reg-sub :db (fn [db -query-] db))
 ;****************************************************************
 
-(defn define-topic-old! [& forms] (apply rf/reg-sub forms))
-
+; #todo macro to insert topic as fn-name;  :sorted-todos => (fn sorted-todos-fn ...)
+; #todo (flame/define-topic! :sorted-todos ...) => (fn sorted-todos-fn ...)
 (defn define-topic!
   [topic-id input-topics tx-fn]
   (when-not (vector? input-topics) (throw (ex-info "input-topics must be a vector" input-topics)))
