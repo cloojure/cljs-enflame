@@ -7,6 +7,53 @@
 ; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
 (enable-console-print!)
 
+;---------------------------------------------------------------------------------------------------
+; context map (ctx) =>   { :coeffects   {:db {...}
+;                                        :other {...}}
+;                          :effects     {:db {...}
+;                                        :dispatch [...]}
+;                          ... ; other stuff }
+; interceptors' :before fns should accumulate data into :coeffects map
+; interceptors' :after  fns should process    data from   :effects map
+
+; #todo (definterceptor my-intc  ; added to :id field as kw
+; #todo   "doc string"
+; #todo   {:enter (fn [state] ...)       to match pedestal
+; #todo    :leave (fn [state] ...) } )
+; #todo event handlers: document that `state` is coeffects/effects (ignore the difference)
+;     coeffects  =>  state-in
+;       effects  =>  state-out
+
+; #todo   maybe rename interceptor chain to intc-chain, proc-chain, transform-chain
+
+; #todo   unify [:dispatch ...] effect handlers
+; #todo     {:do-effects [  ; <= always a vector param, else a single effect
+; #todo        {:effect/id :eff-tag-1  :par1 1  :par2 2}
+; #todo        {:effect/id :eff-tag-2  :effect/delay {:value 200  :unit :ms} ;
+; #todo         :some-param "hello"  :another-param :italics } ] }
+
+; #todo make all routes define an intc chain.
+
+; #todo [:delete-item 42] => {:event/id :delete-item :idx 42}
+; #todo   {:event/id :set-timer  :units :ms :value 50 :action (fn [] (js/alert "Expired!") }
+
+; #todo (dispatch-event {:event/id <some-id> ...} )   => event map
+; #todo (add-task state {:effect/id <some-id> ...} )  => updated state
+
+; #todo setup, prep, resources, augments, ancillary, annex, ctx, info, data
+; #todo environment, adornments, supplements
+
+; #todo teardown, completion, tasks, commands, orders
+
+;---------------------------------------------------------------------------------------------------
+; #todo Need a way to document event names and args
+; #todo    (defevent set-showing [state])
+; #todo event handlers take only params-map (fn [params :- tsk/Map] ...)  ; params => {:state <state>   :event <event>}
+
+; #TODO CHANGE ALL EVENTS to be maps => {:id :set-showing   :new-filter-kw :completed ...}
+; #TODO CHANGE ALL HANDLERS to be (defn some-handler [state event]   (with-map-vals event [id new-filter-kw] ...)
+;---------------------------------------------------------------------------------------------------
+
 (defn swap-out!     ; #todo => tupelo/core.cljc
   "Just like clojure.core/swap!, but returns the old value"
   [tgt-atom swap-fn & args]
@@ -76,26 +123,17 @@
     (apply rf/reg-sub args-vec)))
 
 
-; #todo need macro  (with-path ctx [:db :todos] ...) ; extract and replace in ctx
-; #todo need macro  (with-db ctx ...) ; hardwired for path of [:db]
+; #todo need macro  (with-path state [:db :todos] ...) ; extract and replace in ctx
+; #todo need macro  (with-db state ...) ; hardwired for path of [:db]
 
-; #todo maybe macro  (with-result some-val ...) always returns some-val (like identity-with-side-effects)
+; #todo macro  (with-result some-val ...) always returns some-val (like identity-with-side-effects)
 
-; #todo remember this (modify into `(definterceptor trim-event { ... } )`
-(comment
-  (def trim-event
-    (re-frame.core/->interceptor ; takes a naked map
-      :id     :trim-event
-      :before (fn [context]
-                (let [trim-fn (fn [event] (-> event rest vec))]
-                  (update-in context [:coeffects :event] trim-fn)))))
-  )
 
- ; #todo definterceptor-state (auto-set :id same as name)
-(defn interceptor-state ; #todo need test
+ ; #todo macro definterceptor (auto-set :id same as name)
+(defn interceptor ; #todo need test
   "Creates a simple interceptor that accepts & returns state. Usage:
 
-      (interceptor-state { :id    :some-intc
+      (flame/interceptor { :id    :some-intc
                            :enter (fn [& args] ...)
                            :leave (fn [& args] ...) } )
 

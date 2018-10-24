@@ -54,7 +54,7 @@ Go ahead and edit it and see reloading in action. Again, or not.")
     ;   - https://github.com/juxt/bidi
     ; We don't have a strong opinion.
 
-; Here we listen for URL change events and use secretary/dispatch to propotate them to [:set-showing ...]
+; Here we listen for URL change events and use secretary/dispatch to propagate them to [:set-showing ...]
 (def history
   (doto (History.)
     (goog.events/listen EventType.NAVIGATE

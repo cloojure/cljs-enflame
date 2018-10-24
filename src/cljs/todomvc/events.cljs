@@ -4,58 +4,21 @@
     [re-frame.core :as rf]
     [re-frame.std-interceptors :as rfstd]
     [todomvc.db :as todo-db]
-    [todomvc.enflame :as flame]
-  ))
+    [todomvc.enflame :as flame] ))
 
 ; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
 (enable-console-print!)
 
-; context map (ctx) =>   { :coeffects   {:db {...}
-;                                        :other {...}}
-;                          :effects     {:db {...}
-;                                        :dispatch [...]}
-;                          ... ; other stuff }
-; interceptors' :before fns should accumulate data into :coeffects map
-; interceptors' :after  fns should process    data from   :effects map
-
-;-----------------------------------------------------------------------------
-; #todo (definterceptor my-intc  ; added to :id field as kw
-; #todo   "doc string"
-; #todo   {:enter (fn [state] ...)       to match pedestal
-; #todo    :leave (fn [state] ...) } )
-; #todo event handlers: document that `state` is coeffects/effects (ignore the difference)
-;     coeffects  =>  state-in
-;       effects  =>  state-out
-
-; #todo   maybe rename interceptor chain to intc-chain, proc-chain, transform-chain
-
-; #todo   unify [:dispatch ...] effect handlers
-; #todo     {:do-effects [  ; <= always a vector param, else a single effect
-; #todo        {:effect/id :eff-tag-1  :par1 1  :par2 2}
-; #todo        {:effect/id :eff-tag-2  :effect/delay {:value 200  :unit :ms} ;
-; #todo         :some-param "hello"  :another-param :italics } ] }
-
-; #todo make all routes define an intc chain.
-
-; #todo [:delete-item 42] => {:event/id :delete-item :idx 42}
-; #todo   {:event/id :set-timer  :units :ms :value 50 :action (fn [] (js/alert "Expired!") }
-
-; #todo (dispatch-event {:event/id <some-id> ...} )   => event map
-; #todo (add-task state {:effect/id <some-id> ...} )  => updated state
-
-; #todo setup, prep, resources, augments, ancillary, annex, ctx, info, data
-; #todo environment, adornments, supplements
-
-; #todo teardown, completion, tasks, commands, orders
-
-(def local-store-todos-intc ; injects the todos stored in localstore.
-  (flame/interceptor-state
+(def local-store-todos-intc ; injects state with todos from the localstore.
+  (flame/interceptor
     {:id    :local-store-todos-intc
-     :enter (fn [state]
-              (assoc state ; put the localstore todos into the coeffect under :local-store-todos
-                :local-store-todos (into (sorted-map) ; read in todos from localstore, and process into a sorted map
-                                     (some->> (.getItem js/localStorage todo-db/js-localstore-key)
-                                       (cljs.reader/read-string)))))
+     :enter (fn [state] ; read in todos from localstore, and process into a sorted map
+              (let [loaded-value     (some->> (.getItem js/localStorage todo-db/js-localstore-key)
+                                       (cljs.reader/read-string))
+                    todos-sorted     (into (sorted-map) (flame/get-in-strict loaded-value [:todos]))
+                    loaded-value-out (into loaded-value {:todos todos-sorted})
+                    state-out        (into state {:local-store-todos loaded-value-out})]
+                state-out))
      :leave identity}))
 
 (def check-spec-intc
@@ -63,6 +26,7 @@
   (rf/after ; An `after` interceptor receives `db` from (get-in ctx [:effects db]). Return value is ignored.
     (fn [db -event-]
       (when-not (s/valid? :todomvc.db/db db)
+        (println :failed-check (s/explain-str :todomvc.db/db db))
         (throw (ex-info (str "spec check failed: " (s/explain-str :todomvc.db/db db)) db))))))
 
 ; Part of the TodoMVC Challenge is to store todos in local storage. Here we define an interceptor to do this.
@@ -89,23 +53,14 @@
 ; It establishes initial application state in `app-db`. That means merging:
 ;   1. Any todos stored in LocalStore (from the last session of this app)
 ;   2. Default initial values
-(defn initialise-db-handler [state  -event-]
-    (js/console.log :initialize-db :enter state )
-    (let [{:keys [db local-store-todos]} state
-          result {:db todo-db/default-db ; #awt
-                  ; #awt (assoc todo-db/default-db :todos local-store-todos)
-                 }]
-      (js/console.log :initialize-db :leave result)
-      result))
-
-; Need a way to document event names and args
-;    #todo (defevent set-showing [state])
-; #todo event handlers take only params-map (fn [params :- tsk/Map] ...)
-
-; #todo #awt merge => global state (old cofx)
-
-; #TODO CHANGE ALL EVENTS to be maps => {:id :set-showing   :new-filter-kw :completed ...}
-; #TODO CHANGE ALL HANDLERS to be (defn some-handler [state event]   (with-map-vals event [id new-filter-kw] ...)
+(defn initialise-db-handler [state -event-]
+  (js/console.log :initialize-db :enter state)
+  (let [local-store-todos        (flame/get-in-strict state [:local-store-todos :todos])
+        result                   (into state
+                                   {:db ; todo-db/default-db
+                                    (into todo-db/default-db {:todos local-store-todos}) })]
+     (js/console.log :initialize-db :leave result)
+    result))
 
 (defn set-showing-handler
   "Handles clicks on one of the 3 filter buttons at the bottom of the display."

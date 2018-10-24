@@ -2,6 +2,8 @@
   (:require
     [todomvc.enflame :as flame] ))
 
+; #todo these should all return a map
+
 (defn register-topics! []
   (flame/define-topic! :showing
     [:db]

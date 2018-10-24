@@ -57,7 +57,7 @@
            :on-stop #(reset! editing false)}])])))
 
 (defn task-list []
-  (let [visible-todos (flame/from-topic [:visible-todos])
+  (let [visible-todos (flame/from-topic [:visible-todos :a :b])
         all-complete? (flame/from-topic [:all-complete?])]
     [:section#main
      [:input#toggle-all
@@ -74,7 +74,7 @@
 ; These buttons are actually hrefs (hyperliks) that will cause broswser navigation observed by History
 ; and propogated via secretary.
 (defn footer-controls []
-  (let [[num-active num-done] (flame/from-topic [:footer-counts])
+  (let [[num-active num-done] (flame/from-topic [:footer-counts 1 2])
         showing               (flame/from-topic [:showing])
         anchor-generator-fn (fn [filter-kw txt]
                               [:a {:class (when (= filter-kw showing) "selected")
