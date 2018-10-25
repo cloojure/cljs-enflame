@@ -154,10 +154,10 @@
                 (js/console.info :db-intc-enter :end (ctx-trim ctx-out))
                 ctx-out))
      :leave (fn [ctx]
-              (js/console.info :db-intc-leave :begin (ctx-trim ctx))
+              (println :db-intc-leave :begin (ctx-trim ctx))
               (let [db-val (get-in-strict ctx [:db])]
                 (when-not (identical? @rfdb/app-db db-val)
-                  (js/console.info :db-intc-leave "resetting app-db atom...")
+                  (println :db-intc-leave "resetting app-db atom...")
                   (reset! rfdb/app-db db-val))))}))
 
 ;---------------------------------------------------------------------------------------------------
