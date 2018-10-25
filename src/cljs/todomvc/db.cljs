@@ -1,7 +1,8 @@
 (ns todomvc.db
   (:require [cljs.reader]
             [cljs.spec.alpha :as s]
-            [re-frame.core :as rf]))
+            [re-frame.core :as rf]
+            [todomvc.enflame :as flame] ))
 
 ; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
 (enable-console-print!)
@@ -51,10 +52,41 @@
 ; filter. Just the todos.
 (def js-localstore-key "todos-reframe") ; localstore key
 
-(defn todos->local-store
-  "Puts todos into localStorage"
-  [todos]
-  ; (js/console.info :todos->local-store todos)
-  (let [edn-str (str todos)]
-    (.setItem js/localStorage js-localstore-key edn-str))) ; sorted-map written as an edn string
+(def check-spec-intc
+  "Checks app-db for correctness after event handler runs"
+  (flame/interceptor
+    {:id    :check-spec-intc
+     :enter identity
+     :leave (fn [state]
+              (let [db (flame/get-in-strict state [:db])]
+                (when-not (s/valid? :todomvc.db/db db)
+                  (println :check-spec-intc :state state)
+                  (println :failed-check (s/explain-str :todomvc.db/db db))
+                  (throw (ex-info (str "spec check failed: " (s/explain-str :todomvc.db/db db)) db))))
+              state)}))
+
+; Part of the TodoMVC Challenge is to store todos in local storage. Here we define an interceptor to do this.
+(def localstore-save-intc
+  (flame/interceptor
+    {:id    :localstore-save-intc
+     :enter identity
+     :leave (fn [state]
+              (let [todos   (flame/get-in-strict state [:db :todos])
+                    edn-str (str todos)] ; sorted-map written as an edn string
+                (js/console.info :todos->local-store todos)
+                (.setItem js/localStorage js-localstore-key edn-str))
+              state)}))
+
+ ; read in todos from localstore, and process into a sorted map
+(def localstore-load-intc ; injects state with todos from the localstore.
+  (flame/interceptor
+    {:id    :localstore-load-intc
+     :enter (fn [state]
+              (let [item-read    (.getItem js/localStorage js-localstore-key)
+                    loaded-value (some-> item-read
+                                   (cljs.reader/read-string) ; convert edn string => actual map
+                                   (flame/->sorted-map)) ; coerce to a sorted map (from unsorted map)
+                    state-sort   (into state {:local-store-todos loaded-value})]
+                state-sort))
+     :leave identity}))
 
