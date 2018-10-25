@@ -20,7 +20,7 @@
 (defn initialise-db [ctx -event-]
   (js/console.log :initialise-db-handler :enter ctx)
   (let [local-store-todos (flame/get-in-strict ctx [:local-store-todos])
-        initial-db        (into todo.db/default-db {:todos local-store-todos})
+        initial-db        (into todo.db/default-state {:todos local-store-todos})
         ctx-out         (into ctx {:app-state initial-db}) ]
     (js/console.log :initialise-db-handler :leave ctx-out)
     ctx-out))

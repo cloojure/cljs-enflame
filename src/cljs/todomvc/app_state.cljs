@@ -41,7 +41,7 @@
 ; Look in:
 ;   1.  `core.cljs` for  "(dispatch-sync [:initialise-db])"
 ;   2.  `events.cljs` for the registration of :initialise-db handler
-(def default-db     ; what gets put into app-db by default.
+(def default-state     ; what gets put into app-db by default.
   {:todos   (sorted-map) ; an empty list of todos. Use the (int) :id as the key
    :showing :all})  ; show all todos
 
