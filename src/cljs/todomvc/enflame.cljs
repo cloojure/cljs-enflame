@@ -3,12 +3,10 @@
     [re-frame.core :as rf]
     [re-frame.db :as rfdb]
     [re-frame.events :as rfe]
-    [re-frame.fx :as rfx]
-    [re-frame.interceptor :as rfi]
     [re-frame.loggers :as rflog]
     [re-frame.router :as rfr]
     [re-frame.std-interceptors :as rf.std-intc]
-    ))
+  ))
 
 ; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
 (enable-console-print!)
@@ -164,7 +162,16 @@
   (when-not (vector? interceptor-chain) (throw (ex-info "illegal interceptor-chain" interceptor-chain)))
   (when-not (every? map? interceptor-chain) (throw (ex-info "illegal interceptor" interceptor-chain))) ; #todo detail intc map
   (when-not (fn? handler) (throw (ex-info "illegal handler" handler)))
-  (rfe/register event-id [db-intc event-dispatch-intc interceptor-chain (rf.std-intc/fx-handler->interceptor handler)]))
+  (let [handler-intc {:id     event-id
+                      :before (fn [rf-ctx]
+                                (let [state      (get-in-strict rf-ctx [:coeffects])
+                                      event      (get-in-strict state [:event])
+                                      state-out  (handler state event)
+                                      rf-ctx-out (into rf-ctx {:effects state-out})]
+                                  rf-ctx-out))
+                      :after  identity}]
+    (rfe/register event-id
+      [db-intc event-dispatch-intc interceptor-chain handler-intc])))
 
 (defn dispatch-event [& args] (apply rf/dispatch args) )
 
