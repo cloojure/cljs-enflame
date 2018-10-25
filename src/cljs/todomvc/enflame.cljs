@@ -11,14 +11,6 @@
 (enable-console-print!)
 
 ;---------------------------------------------------------------------------------------------------
-; context map (ctx) =>   { :coeffects   {:db {...}
-;                                        :other {...}}
-;                          :effects     {:db {...}
-;                                        :dispatch [...]}
-;                          ... ; other stuff }
-; interceptors' :before fns should accumulate data into :coeffects map
-; interceptors' :after  fns should process    data from   :effects map
-
 ; #todo (definterceptor my-intc  ; added to :id field as kw
 ; #todo   "doc string"
 ; #todo   {:enter (fn [state] ...)       to match pedestal
@@ -140,25 +132,25 @@
              ;(println :dispatch-all-intc :leave)
               ctx)}))
 
-(def db-intc
+(def app-state-intc
   (interceptor
-    {:id    :db-intc
+    {:id    :app-state-intc
      :enter (fn [ctx]
-              (js/console.info :db-intc-enter :begin (ctx-trim ctx))
+             ;(js/console.info :app-state-intc-enter :begin (ctx-trim ctx))
               (let [ctx-out (-> ctx
                               (into {:data/type :enflame/context
-                                     :db        @rfdb/app-db
+                                     :app-state        @rfdb/app-db
                                      ; KLUDGE: Move `:event` from :coeffects sub-map to parent `context` map.
                                      ; KLUDGE:   Allows us to use unmodified re-frame as "hosting" lib
                                      :event     (get-in-strict ctx [:coeffects :event])})
                               (dissoc :coeffects))]
-                (js/console.info :db-intc-enter :end (ctx-trim ctx-out))
+               ;(js/console.info :app-state-intc-enter :end (ctx-trim ctx-out))
                 ctx-out))
      :leave (fn [ctx]
-              (println :db-intc-leave :begin (ctx-trim ctx))
-              (let [db-val (get-in-strict ctx [:db])]
+             ;(println :app-state-intc-leave :begin (ctx-trim ctx))
+              (let [db-val (get-in-strict ctx [:app-state])]
                 (when-not (identical? @rfdb/app-db db-val)
-                  (println :db-intc-leave "resetting app-db atom...")
+                  (println :app-state-intc-leave "resetting app-db atom...")
                   (reset! rfdb/app-db db-val))))}))
 
 ;---------------------------------------------------------------------------------------------------
@@ -178,7 +170,7 @@
                                    ctx-out))
                         :leave identity})]
     (rfe/register event-id
-      [db-intc event-dispatch-intc interceptor-chain handler-intc])))
+      [app-state-intc event-dispatch-intc interceptor-chain handler-intc])))
 
 ; #todo need plumatic schema:  event => [:kw-evt-name & args]
 (defn dispatch-event [& args] (apply rf/dispatch args) )
@@ -186,8 +178,8 @@
 (defn dispatch-event-sync [& args] (apply rf/dispatch-sync args) )
 
 ;****************************************************************
-; Define built-in :db topic
-(rf/reg-sub :db (fn [db -query-] db))
+; Define built-in :app-state topic
+(rf/reg-sub :app-state (fn [db -query-] db))
 ;****************************************************************
 
 ; #todo macro to insert topic as fn-name;  :sorted-todos => (fn sorted-todos-fn ...)
@@ -204,8 +196,8 @@
         args-vec    (vec (concat [topic-id] sugar-forms [tx-fn]))]
     (apply rf/reg-sub args-vec)))
 
-; #todo need macro  (with-path state [:db :todos] ...) ; extract and replace in ctx
-; #todo need macro  (with-db state ...) ; hardwired for path of [:db]
+; #todo need macro  (with-path state [:app-state :todos] ...) ; extract and replace in ctx
+; #todo need macro  (with-db state ...) ; hardwired for path of [:app-state]
 
 ; #todo macro  (with-result some-val ...) always returns some-val (like identity-with-side-effects)
 

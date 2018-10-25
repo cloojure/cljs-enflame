@@ -9,12 +9,12 @@
 
 (defn register-topics! []
   (flame/define-topic! :showing
-    [:db]
+    [:app-state]
     (fn [db -query-]
       (:showing db)))
 
   (flame/define-topic! :sorted-todos
-    [:db]
+    [:app-state]
     (fn [db -query-]
       (:todos db)))
 

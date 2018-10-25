@@ -33,7 +33,7 @@
   #{:all            ; all todos are shown
     :active         ; only todos whose :completed is false
     :completed})         ; only todos whose :completed is true
-(s/def ::db (s/keys :req-un [::todos ::showing]))
+(s/def ::app-state (s/keys :req-un [::todos ::showing]))
 
 ; -- Default app-db Value  ---------------------------------------------------
 ; When the application first starts, this will be the value put in app-db
@@ -58,11 +58,11 @@
     {:id    :check-spec-intc
      :enter identity
      :leave (fn [state]
-              (let [db (flame/get-in-strict state [:db])]
-                (when-not (s/valid? :todomvc.db/db db)
+              (let [app-state (flame/get-in-strict state [:app-state])]
+                (when-not (s/valid? ::app-state app-state)
                   (println :check-spec-intc :state state)
-                  (println :failed-check (s/explain-str :todomvc.db/db db))
-                  (throw (ex-info (str "spec check failed: " (s/explain-str :todomvc.db/db db)) db))))
+                  (println :failed-check (s/explain-str :todomvc.db/db app-state))
+                  (throw (ex-info (str "spec check failed: " (s/explain-str :todomvc.db/db app-state)) app-state))))
               state)}))
 
 ; Part of the TodoMVC Challenge is to store todos in local storage. Here we define an interceptor to do this.
@@ -71,9 +71,9 @@
     {:id    :localstore-save-intc
      :enter identity
      :leave (fn [state]
-              (let [todos   (flame/get-in-strict state [:db :todos])
+              (let [todos   (flame/get-in-strict state [:app-state :todos])
                     edn-str (str todos)] ; sorted-map written as an edn string
-                (js/console.info :todos->local-store todos)
+               ;(js/console.info :todos->local-store todos)
                 (.setItem js/localStorage js-localstore-key edn-str))
               state)}))
 
