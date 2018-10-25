@@ -197,21 +197,18 @@
   3. new db
   "
   (rfi/->interceptor ; #todo convert to interceptor-state
-    :id     ::trace
+    :id ::trace
     :before (fn debug-before
               [context]
-              (rflog/console :log "Handling re-frame event:" (rfi/get-coeffect context :event))
+              (println :trace "Handling re-frame event:" (get-in-strict context [:coeffects :event]))
+              (println :trace :enter (get-in-strict context [:coeffects]))
               context)
 
-    :after  (fn debug-after ; #todo => (with-result context ...)
-              [context]
-              (enable-console-print!)
-              (let [event   (rfi/get-coeffect context :event)
-                    db-orig (rfi/get-coeffect context :db)
-                    db-new  (rfi/get-effect   context :db ::not-found)]
-                (println :log :enter db-orig)
-                (println :log :leave db-new)
-                context))))
+    :after (fn debug-after ; #todo => (with-result context ...)
+             [context]
+             (enable-console-print!)
+             (println :trace :leave (get-in-strict context [:effects]))
+             context)))
 
 ; #todo   => (event-handler-set!    :evt-name  (fn [& args] ...)) or subscribe-to  subscribe-to-event
 ; #todo   => (event-handler-clear!  :evt-name)

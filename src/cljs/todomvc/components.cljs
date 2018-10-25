@@ -29,7 +29,7 @@
                           (condp = rcvd
                             flame/ascii-code-return (save-fn)
                             flame/ascii-code-escape (stop-fn)
-                            :else nil))})])))
+                            nil))})])))
 
 (defn task-list-row []
   (let [editing (r/atom false)]
