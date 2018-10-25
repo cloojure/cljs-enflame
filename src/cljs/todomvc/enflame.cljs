@@ -97,6 +97,12 @@
     result))
 
 ;---------------------------------------------------------------------------------------------------
+(defonce ctx-trim-queue-stack (atom true))
+(defn ctx-trim [ctx]
+  (if @ctx-trim-queue-stack
+    (dissoc ctx :queue :stack)
+    ctx))
+
 ; #todo macro definterceptor (auto-set :id same as name)
 (defn interceptor ; #todo need test
   "Creates a simple interceptor that accepts & returns state. Usage:
@@ -108,27 +114,22 @@
   NOTE: enflame uses Pedestal-style `:enter` & `:leave` keys for the interceptor map.
   "
   [map-in]         ; #todo :- tsk/KeyMap
-  (js/console.log :map-in  map-in)
-  (let [enter-fn  (get-in-strict map-in [:enter])
-        leave-fn  (get-in-strict map-in [:leave])
-        before-fn (fn [ctx] (update-in ctx [:coeffects] enter-fn))
-        after-fn  (fn [ctx] (update-in ctx [ :effects]  leave-fn))]
-    {:id (get-in-strict map-in [:id])
-     :before before-fn
-     :after  after-fn}))
+  {:id     (get-in-strict map-in [:id])
+   :before (get-in-strict map-in [:enter])
+   :after  (get-in-strict map-in [:leave])})
 ; #todo allow one of :enter or :leave to be blank => identity
 ; #todo add :error key like pedestal?
 
 (def event-dispatch-intc
-  (interceptor
+  (interceptor      ; #todo need test
     {:id    :dispatch-all-intc
      :enter identity
-     :leave (fn [state]
-             ;(println :dispatch-all-intc :enter state)
-              (let [dispatch-cmd      (let [cmd (:dispatch state)]
+     :leave (fn [ctx] ; #todo (with-result ctx ...)
+             ;(println :dispatch-all-intc :enter (ctx-trim ctx))
+              (let [dispatch-cmd      (let [cmd (:dispatch ctx)]
                                         (if cmd [cmd] []))
-                    dispatch-n-cmds   (get state :dispatch-n [])
-                    dispatch-all-cmds (get state :dispatch-all [])
+                    dispatch-n-cmds   (get ctx :dispatch-n [])
+                    dispatch-all-cmds (get ctx :dispatch-all [])
                     dispatch-cmds     (vec (concat dispatch-cmd dispatch-n-cmds dispatch-all-cmds))]
                ;(println :dispatch-all-intc :dispatch-cmds dispatch-cmds)
                 (doseq [dispatch-cmd dispatch-cmds]
@@ -136,39 +137,45 @@
                     (rflog/console :error "dispatch-all-intc: bad dispatch-cmd=" dispatch-cmd)
                     (rfr/dispatch dispatch-cmd))))
              ;(println :dispatch-all-intc :leave)
-              state)}))
+              ctx)}))
 
 (def db-intc
   (interceptor
     {:id    :db-intc
-     :enter (fn [state]
-              (let [result (into state {:db @rfdb/app-db
-                                        :data/type :enflame/state})]
-               ;(println :db-intc :enter result)
-                result))
-     :leave (fn [state]
-             ;(println :db-intc :leave :state state)
-              (let [db-val (get-in-strict state [:db])]
-                (if-not (identical? @rfdb/app-db db-val)
+     :enter (fn [ctx]
+              (js/console.info :db-intc-enter :begin (ctx-trim ctx))
+              (let [ctx-out (-> ctx
+                              (into {:data/type :enflame/context
+                                     :db        @rfdb/app-db
+                                     ; KLUDGE: Move `:event` from :coeffects sub-map to parent `context` map.
+                                     ; KLUDGE:   Allows us to use unmodified re-frame as "hosting" lib
+                                     :event     (get-in-strict ctx [:coeffects :event])})
+                              (dissoc :coeffects))]
+                (js/console.info :db-intc-enter :end (ctx-trim ctx-out))
+                ctx-out))
+     :leave (fn [ctx]
+              (js/console.info :db-intc-leave :begin (ctx-trim ctx))
+              (let [db-val (get-in-strict ctx [:db])]
+                (when-not (identical? @rfdb/app-db db-val)
+                  (js/console.info :db-intc-leave "resetting app-db atom...")
                   (reset! rfdb/app-db db-val))))}))
 
 ;---------------------------------------------------------------------------------------------------
 ; #todo need macro  (definterceptor todos-done {:name ...   :enter ...   :leave ...} )
 
 (defn event-handler-for!
-  [event-id interceptor-chain handler]
+  [event-id interceptor-chain handler-fn]
   (when-not (keyword? event-id) (throw (ex-info "illegal event-id" event-id)))
   (when-not (vector? interceptor-chain) (throw (ex-info "illegal interceptor-chain" interceptor-chain)))
   (when-not (every? map? interceptor-chain) (throw (ex-info "illegal interceptor" interceptor-chain))) ; #todo detail intc map
-  (when-not (fn? handler) (throw (ex-info "illegal handler" handler)))
-  (let [handler-intc {:id     event-id
-                      :before (fn [rf-ctx]
-                                (let [state      (get-in-strict rf-ctx [:coeffects])
-                                      event      (get-in-strict state [:event])
-                                      state-out  (handler state event)
-                                      rf-ctx-out (into rf-ctx {:effects state-out})]
-                                  rf-ctx-out))
-                      :after  identity}]
+  (when-not (fn? handler-fn) (throw (ex-info "illegal handler-fn" handler-fn)))
+  (let [handler-intc (interceptor
+                       {:id    event-id
+                        :enter (fn [ctx]
+                                 (let [event   (get-in-strict ctx [:event])
+                                       ctx-out (handler-fn ctx event)]
+                                   ctx-out))
+                        :leave identity})]
     (rfe/register event-id
       [db-intc event-dispatch-intc interceptor-chain handler-intc])))
 
@@ -186,6 +193,7 @@
 ; #todo (flame/define-topic! :sorted-todos ...) => (fn sorted-todos-fn ...)
 (defn define-topic!
   [topic-id input-topics tx-fn]
+  (when-not (keyword? topic-id) (throw (ex-info "topic-id must be a keyword" topic-id)))
   (when-not (vector? input-topics) (throw (ex-info "input-topics must be a vector" input-topics)))
   (when-not (every? keyword? input-topics) (throw (ex-info "topic values must be keywords" input-topics)))
   (when-not (fn? tx-fn) (throw (ex-info "tx-fn must be a function" tx-fn)))
@@ -194,7 +202,6 @@
                              [:<- [input-topic]])))
         args-vec    (vec (concat [topic-id] sugar-forms [tx-fn]))]
     (apply rf/reg-sub args-vec)))
-
 
 ; #todo need macro  (with-path state [:db :todos] ...) ; extract and replace in ctx
 ; #todo need macro  (with-db state ...) ; hardwired for path of [:db]
@@ -215,17 +222,20 @@
   (interceptor
     {:id    :trace
      :enter (fn trace-enter ; #todo => (with-result context ...)
-              [state]
-              (rflog/console :log "Handling re-frame event:" (get-in-strict state [:event]))
-              (rflog/console :log :trace :enter state)
-              state)
+              [ctx]
+              (let [ctx (ctx-trim ctx)]
+                (rflog/console :log "Handling re-frame event:" (get-in-strict ctx [:event]))
+                (rflog/console :log :trace :enter ctx))
+              ctx)
 
      :leave (fn trace-leave ; #todo => (with-result context ...)
-              [state]
-             ;(rflog/console :group "leaving trace-intc...")
-              (rflog/console :log :trace :leave state)
-             ;(rflog/console :groupEnd)
-              state)}))
+              [ctx]
+              (let [ctx (ctx-trim ctx)]
+               ;(rflog/console :group "leaving trace-intc...")
+                (rflog/console :log :trace :leave ctx)
+               ;(rflog/console :groupEnd)
+              )
+              ctx)}))
 
 (def trace-print
   "An interceptor which logs/instruments an event handler's actions to
@@ -239,15 +249,17 @@
     {:id    :trace-print
 
      :enter (fn trace-enter
-              [state]
-              (println :trace "Handling re-frame event:" (get-in-strict state [:event]))
-              (println :trace :enter state)
-              state)
+              [ctx]
+              (let [ctx (ctx-trim ctx)]
+                (println :trace "Handling re-frame event:" (get-in-strict ctx [:event]))
+                (println :trace :enter ctx))
+              ctx)
 
      :leave (fn trace-leave ; #todo => (with-result context ...)
-              [state]
-              (println :trace :leave state)
-              state)}))
+              [ctx]
+              (let [ctx (ctx-trim ctx)]
+                (println :trace :leave ctx))
+              ctx)}))
 
 ; #todo   => (event-handler-set!    :evt-name  (fn [& args] ...)) or subscribe-to  subscribe-to-event
 ; #todo   => (event-handler-clear!  :evt-name)
