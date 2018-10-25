@@ -55,9 +55,9 @@ Go ahead and edit it and see reloading in action. Again, or not.")
   (configure-routes!)
   (events/register-handlers!)
   (topics/register-topics!)
-  ; Put an initial value into app-db. The event handler for `:initialize-db` can be found in `events.cljs`
+  ; Put an initial value into :app-state. The event handler for `:initialize-state` can be found in `events.cljs`
   ; Using the sync version of dispatch means that value is in place before we go onto the next step.
-  (flame/dispatch-event-sync [:initialize-db])
+  (flame/dispatch-event-sync [:initialize-state])
   (flame/dispatch-event [:set-showing-mode :all])
   ; #todo remove this - make a built-in :init that every event-handler verifies & waits for (top priority)
   ; #todo add concept of priority to event dispatch

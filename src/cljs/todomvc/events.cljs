@@ -1,28 +1,28 @@
 (ns todomvc.events
   (:require
-    [todomvc.db :as todo.db]
+    [todomvc.app-state :as app-state]
     [todomvc.enflame :as flame] ))
 
 ; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
 (enable-console-print!)
 
 (def common-interceptors
-  [todo.db/check-spec-intc
-   todo.db/localstore-save-intc
+  [app-state/check-spec-intc
+   app-state/localstore-save-intc
   ;flame/trace
    flame/trace-print
   ])
 
-; This event is dispatched when the app's `main` ns is loaded (todomvc.core).
-; It establishes initial application state in `app-db`. That means merging:
-;   1. Any todos stored in LocalStore (from the last session of this app)
+; This event is dispatched when the app's `main` ns is loaded (todomvc.core). It establishes
+; initial application state in the context map `:app-state` key. That means merging:
+;   1. Any todos stored in the browser's LocalStore (from the last session of this app)
 ;   2. Default initial values
-(defn initialise-db [ctx -event-]
-  (js/console.log :initialise-db-handler :enter ctx)
+(defn initialise-app-state [ctx -event-]
+  (js/console.log :initialise-app-state :enter ctx)
   (let [local-store-todos (flame/get-in-strict ctx [:local-store-todos])
-        initial-db        (into todo.db/default-state {:todos local-store-todos})
-        ctx-out         (into ctx {:app-state initial-db}) ]
-    (js/console.log :initialise-db-handler :leave ctx-out)
+        initial-state     (into app-state/default-state {:todos local-store-todos})
+        ctx-out           (into ctx {:app-state initial-state})]
+    (js/console.log :initialise-app-state :leave ctx-out)
     ctx-out))
 
 ; #todo need plumatic schema and tsk/KeyMap
@@ -72,12 +72,12 @@
     result))
 
 (defn register-handlers! []
-  (flame/event-handler-for! :initialize-db   ; usage: (flame/dispatch-event [:initialise-db])
-    [todo.db/localstore-load-intc todo.db/check-spec-intc]
-    initialise-db)
+  (flame/event-handler-for! :initialize-state   ; usage: (flame/dispatch-event [:initialise-state])
+    [app-state/localstore-load-intc app-state/check-spec-intc]
+    initialise-app-state)
 
   (flame/event-handler-for! :set-showing-mode ; receives events from URL changes via History/secretary
-    [todo.db/check-spec-intc]
+    [app-state/check-spec-intc]
     set-showing-mode)
 
   (flame/event-handler-for! :add-todo

@@ -13,8 +13,8 @@
 ;---------------------------------------------------------------------------------------------------
 ; #todo (definterceptor my-intc  ; added to :id field as kw
 ; #todo   "doc string"
-; #todo   {:enter (fn [state] ...)       to match pedestal
-; #todo    :leave (fn [state] ...) } )
+; #todo   {:enter (fn [ctx] ...)       to match pedestal
+; #todo    :leave (fn [ctx] ...) } )
 ; #todo event handlers: document that `state` is coeffects/effects (ignore the difference)
 ;     coeffects  =>  state-in
 ;       effects  =>  state-out
@@ -42,11 +42,11 @@
 
 ;---------------------------------------------------------------------------------------------------
 ; #todo Need a way to document event names and args
-; #todo    (defevent set-showing [state])
+; #todo    (defevent set-showing [ctx])
 ; #todo event handlers take only params-map (fn [params :- tsk/Map] ...)  ; params => {:state <state>   :event <event>}
 
 ; #TODO CHANGE ALL EVENTS to be maps => {:id :set-showing   :new-filter-kw :completed ...}
-; #TODO CHANGE ALL HANDLERS to be (defn some-handler [state event]   (with-map-vals event [id new-filter-kw] ...)
+; #TODO CHANGE ALL HANDLERS to be (defn some-handler [ctx event]   (with-map-vals event [id new-filter-kw] ...)
 ;---------------------------------------------------------------------------------------------------
 
 (defn swap-out!     ; #todo => tupelo/core.cljc
@@ -148,10 +148,10 @@
                 ctx-out))
      :leave (fn [ctx]
              ;(println :app-state-intc-leave :begin (ctx-trim ctx))
-              (let [db-val (get-in-strict ctx [:app-state])]
-                (when-not (identical? @rfdb/app-db db-val)
-                  (println :app-state-intc-leave "resetting app-db atom...")
-                  (reset! rfdb/app-db db-val))))}))
+              (let [app-state (get-in-strict ctx [:app-state])]
+                (when-not (identical? @rfdb/app-db app-state)
+                  (println :app-state-intc-leave "resetting rfdb/app-db atom...")
+                  (reset! rfdb/app-db app-state))))}))
 
 ;---------------------------------------------------------------------------------------------------
 ; #todo need macro  (definterceptor todos-done {:name ...   :enter ...   :leave ...} )
@@ -179,7 +179,7 @@
 
 ;****************************************************************
 ; Define built-in :app-state topic
-(rf/reg-sub :app-state (fn [db -query-] db))
+(rf/reg-sub :app-state (fn [app-state -query-] app-state)) ; loaded from rfdb/app-db ratom
 ;****************************************************************
 
 ; #todo macro to insert topic as fn-name;  :sorted-todos => (fn sorted-todos-fn ...)
@@ -197,7 +197,6 @@
     (apply rf/reg-sub args-vec)))
 
 ; #todo need macro  (with-path state [:app-state :todos] ...) ; extract and replace in ctx
-; #todo need macro  (with-db state ...) ; hardwired for path of [:app-state]
 
 ; #todo macro  (with-result some-val ...) always returns some-val (like identity-with-side-effects)
 
@@ -209,8 +208,8 @@
   `js/console.log`. See examples/todomvc/src/events.cljs for use.
   Output includes:
   1. the event vector
-  2. orig db
-  3. new db
+  2. orig app-state
+  3. new app-state
   "
   (interceptor
     {:id    :trace
@@ -235,8 +234,8 @@
   `js/console.log`. See examples/todomvc/src/events.cljs for use.
   Output includes:
   1. the event vector
-  2. orig db
-  3. new db
+  2. orig app-state
+  3. new app-state
   "
   (interceptor
     {:id    :trace-print

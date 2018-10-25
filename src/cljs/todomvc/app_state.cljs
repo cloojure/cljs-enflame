@@ -1,4 +1,4 @@
-(ns todomvc.db
+(ns todomvc.app-state
   (:require [cljs.reader]
             [cljs.spec.alpha :as s]
             [re-frame.core :as rf]
@@ -8,12 +8,12 @@
 (enable-console-print!)
 
 ; -- Spec --------------------------------------------------------------------
-; This is a clojure.spec specification for the value in app-db. It is like a
+; This is a clojure.spec specification for the value in :app-state. It is like a
 ; Schema. See: http://clojure.org/guides/spec
 ;
-; The value in app-db should always match this spec. Only event handlers
-; can change the value in app-db so, after each event handler
-; has run, we re-check app-db for correctness (compliance with the Schema).
+; The value in :app-state should always match this spec. Only event handlers
+; can change the value in :app-state so, after each event handler
+; has run, we re-check :app-state for correctness (compliance with the Schema).
 ;
 ; How is this completed? Look in events.cljs and you'll notice that all handlers
 ; have an "after" interceptor which does the spec re-check.
@@ -35,13 +35,13 @@
     :completed})         ; only todos whose :completed is true
 (s/def ::app-state (s/keys :req-un [::todos ::showing]))
 
-; -- Default app-db Value  ---------------------------------------------------
-; When the application first starts, this will be the value put in app-db
+; -- Default :app-state Value  ---------------------------------------------------
+; When the application first starts, this will be the value put in :app-state
 ; Unless, of course, there are todos in the LocalStore (see further below)
 ; Look in:
-;   1.  `core.cljs` for  "(dispatch-sync [:initialise-db])"
-;   2.  `events.cljs` for the registration of :initialise-db handler
-(def default-state     ; what gets put into app-db by default.
+;   1.  `core.cljs` for  "(dispatch-sync [:initialise-state])"
+;   2.  `events.cljs` for the registration of :initialise-state handler
+(def default-state     ; what gets put into :app-state by default.
   {:todos   (sorted-map) ; an empty list of todos. Use the (int) :id as the key
    :showing :all})  ; show all todos
 
@@ -53,40 +53,40 @@
 (def js-localstore-key "todos-reframe") ; localstore key
 
 (def check-spec-intc
-  "Checks app-db for correctness after event handler runs"
+  "Checks :app-state for correctness after event handler runs"
   (flame/interceptor
     {:id    :check-spec-intc
      :enter identity
-     :leave (fn [state]
-              (let [app-state (flame/get-in-strict state [:app-state])]
+     :leave (fn [ctx]
+              (let [app-state (flame/get-in-strict ctx [:app-state])]
                 (when-not (s/valid? ::app-state app-state)
-                  (println :check-spec-intc :state state)
-                  (println :failed-check (s/explain-str :todomvc.db/db app-state))
-                  (throw (ex-info (str "spec check failed: " (s/explain-str :todomvc.db/db app-state)) app-state))))
-              state)}))
+                  (println :check-spec-intc :ctx ctx)
+                  (println :failed-check (s/explain-str ::app-state app-state))
+                  (throw (ex-info (str "spec check failed: " (s/explain-str ::app-state app-state)) app-state))))
+              ctx)}))
 
 ; Part of the TodoMVC Challenge is to store todos in local storage. Here we define an interceptor to do this.
 (def localstore-save-intc
   (flame/interceptor
     {:id    :localstore-save-intc
      :enter identity
-     :leave (fn [state]
-              (let [todos   (flame/get-in-strict state [:app-state :todos])
+     :leave (fn [ctx]
+              (let [todos   (flame/get-in-strict ctx [:app-state :todos])
                     edn-str (str todos)] ; sorted-map written as an edn string
                ;(js/console.info :todos->local-store todos)
                 (.setItem js/localStorage js-localstore-key edn-str))
-              state)}))
+              ctx)}))
 
  ; read in todos from localstore, and process into a sorted map
-(def localstore-load-intc ; injects state with todos from the localstore.
+(def localstore-load-intc ; injects ctx with todos from the localstore.
   (flame/interceptor
     {:id    :localstore-load-intc
-     :enter (fn [state]
+     :enter (fn [ctx]
               (let [item-read    (.getItem js/localStorage js-localstore-key)
                     loaded-value (some-> item-read
                                    (cljs.reader/read-string) ; convert edn string => actual map
                                    (flame/->sorted-map)) ; coerce to a sorted map (from unsorted map)
-                    state-sort   (into state {:local-store-todos loaded-value})]
-                state-sort))
+                    ctx-sort   (into ctx {:local-store-todos loaded-value})]
+                ctx-sort))
      :leave identity}))
 
