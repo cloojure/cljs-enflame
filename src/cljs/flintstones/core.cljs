@@ -17,17 +17,14 @@
 
 ; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
 (enable-console-print!)
-
 (println
 "This text is printed from src/flintstones/core.cljs.
 Go ahead and edit it and see reloading in action. Again, or not.")
 (println "Hello World! " )
-
 (println "Hello addition:  " (slate/add2 2 3) )
 
 ; -- Debugging aids ----------------------------------------------------------
 (devtools/install!) ; we love https://github.com/binaryage/cljs-devtools
-
 
 ; Set up secretary navigation routing for the event-type filters
 (defn configure-routes! []
@@ -45,12 +42,11 @@ Go ahead and edit it and see reloading in action. Again, or not.")
   (doto (History.)
     (goog.events/listen EventType.NAVIGATE
       (fn [event]
-        (println :history event)
+        (js/console.log :history "token=" (.-token event))
         (secretary/dispatch! (.-token event))))
     (.setEnabled true)))
 
 ;---------------------------------------------------------------------------------------------------
-
 (defn app-start []
   (configure-routes!)
   (events/register-handlers!)
@@ -63,11 +59,14 @@ Go ahead and edit it and see reloading in action. Again, or not.")
 
   (r/render [gui/root] (js/document.getElementById "tgt-div")))
 
-(defonce figwheel-reload-counter (atom 0))
-(defn figwheel-reload ; called from project.clj -> :cljsbuild -> :figwheel -> :on-jsload
+(defonce figwheel-reload-count (atom 0))
+(defn figwheel-reload   ; called from project.clj -> :cljsbuild -> :figwheel -> :on-jsload
   []
-  (swap! figwheel-reload-counter inc)
-  (println "figwheel-reload/enter => " @figwheel-reload-counter))
+  (enable-console-print!) ; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
+  (swap! figwheel-reload-count inc)
+  (println "figwheel-reload/enter => " @figwheel-reload-count))
 
-(app-start) ; ********** kicks off the app **********
+;***************************************************************************************************
+; kick off the app
+(app-start)
 

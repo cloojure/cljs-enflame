@@ -59,12 +59,12 @@
 ;   1. Any todos stored in LocalStore (from the last session of this app)
 ;   2. Default initial values
 (defn initialise-db-handler [state -event-]
-  (js/console.log :initialise-db-handler :enter state)
+ ;(js/console.log :initialise-db-handler :enter state)
   (let [local-store-todos        (flame/get-in-strict state [:local-store-todos :todos])
         result                   (into state
                                    {:db ; todo-db/default-db
                                     (into todo-db/default-db {:todos local-store-todos}) })]
-     (js/console.log :initialise-db-handler :leave result)
+    ;(js/console.log :initialise-db-handler :leave result)
     result))
 
 (defn set-showing-handler

@@ -127,29 +127,30 @@
     {:id    :dispatch-all-intc
      :enter identity
      :leave (fn [state]
-              (println :dispatch-all-intc :enter state)
+             ;(println :dispatch-all-intc :enter state)
               (let [dispatch-cmd      (let [cmd (:dispatch state)]
                                         (if cmd [cmd] []))
                     dispatch-n-cmds   (get state :dispatch-n [])
                     dispatch-all-cmds (get state :dispatch-all [])
                     dispatch-cmds     (vec (concat dispatch-cmd dispatch-n-cmds dispatch-all-cmds))]
-                (println :dispatch-all-intc :dispatch-cmds dispatch-cmds)
+               ;(println :dispatch-all-intc :dispatch-cmds dispatch-cmds)
                 (doseq [dispatch-cmd dispatch-cmds]
                   (if-not (vector? dispatch-cmd)
                     (rflog/console :error "dispatch-all-intc: bad dispatch-cmd=" dispatch-cmd)
                     (rfr/dispatch dispatch-cmd))))
-              (println :dispatch-all-intc :leave)
+             ;(println :dispatch-all-intc :leave)
               state)}))
 
 (def db-intc
   (interceptor
     {:id    :db-intc
      :enter (fn [state]
-              (let [result (assoc state :db @rfdb/app-db)]
-                (println :db-intc :enter result)
-                result ))
+              (let [result (into state {:db @rfdb/app-db
+                                        :data/type :enflame/state})]
+               ;(println :db-intc :enter result)
+                result))
      :leave (fn [state]
-              (println :db-intc :leave :state state )
+             ;(println :db-intc :leave :state state)
               (let [db-val (get-in-strict state [:db])]
                 (if-not (identical? @rfdb/app-db db-val)
                   (reset! rfdb/app-db db-val))))}))
@@ -204,23 +205,21 @@
   2. orig db
   3. new db
   "
-  (rfi/->interceptor ; #todo convert to interceptor-state
-    :id     ::trace
-    :before (fn debug-before
-              [context]
-              (rflog/console :log "Handling re-frame event:" (rfi/get-coeffect context :event))
-              context)
+  (interceptor
+    {:id    :trace
+     :enter (fn trace-enter ; #todo => (with-result context ...)
+              [state]
+              (rflog/console :log "Handling re-frame event:" (get-in-strict state [:event]))
+              (rflog/console :log :trace :enter state)
+              state)
 
-    :after  (fn debug-after ; #todo => (with-result context ...)
-              [context]
-              (let [event   (rfi/get-coeffect context :event)
-                    db-orig (rfi/get-coeffect context :db)
-                    db-new  (rfi/get-effect   context :db ::not-found)]
-                (do (rflog/console :group "db for:" event) ; #todo don't need `do`
-                    (rflog/console :log :before db-orig)
-                    (rflog/console :log :after db-new)
-                    (rflog/console :groupEnd))
-                context))))
+     :leave (fn trace-leave ; #todo => (with-result context ...)
+              [state]
+             ;(rflog/console :group "leaving trace-intc...")
+              (rflog/console :log :trace :leave state)
+             ;(rflog/console :groupEnd)
+              state)}))
+
 (def trace-print
   "An interceptor which logs/instruments an event handler's actions to
   `js/console.log`. See examples/todomvc/src/events.cljs for use.
@@ -229,22 +228,23 @@
   2. orig db
   3. new db
   "
-  (rfi/->interceptor ; #todo convert to interceptor-state
-    :id ::trace
-    :before (fn debug-before
-              [context]
-              (println :trace "Handling re-frame event:" (get-in-strict context [:coeffects :event]))
-              (println :trace :enter (get-in-strict context [:coeffects]))
-              context)
+  (interceptor
+    {:id    :trace-print
 
-    :after (fn debug-after ; #todo => (with-result context ...)
-             [context]
-             (enable-console-print!)
-             (println :trace :leave (get-in-strict context [:effects]))
-             context)))
+     :enter (fn trace-enter
+              [state]
+              (println :trace "Handling re-frame event:" (get-in-strict state [:event]))
+              (println :trace :enter state)
+              state)
+
+     :leave (fn trace-leave ; #todo => (with-result context ...)
+              [state]
+              (println :trace :leave state)
+              state)}))
 
 ; #todo   => (event-handler-set!    :evt-name  (fn [& args] ...)) or subscribe-to  subscribe-to-event
 ; #todo   => (event-handler-clear!  :evt-name)
 ; #todo option for log wrapper (with-event-logging  logger-fn
 ; #todo                          (event-handler-set! :evt-name  (fn [& args] ...)))
+
 

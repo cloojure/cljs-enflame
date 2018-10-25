@@ -78,7 +78,7 @@
         showing               (flame/from-topic [:showing])
         anchor-generator-fn (fn [filter-kw txt]
                               [:a {:class (when (= filter-kw showing) "selected")
-                                   :href  (str "#/" (name filter-kw))} txt])]
+                                   :href  (str "/#/" (name filter-kw))} txt])]
     [:footer#footer
      [:span#todo-count
       [:strong num-active] " " (case num-active 1 "item" "items") " left"]

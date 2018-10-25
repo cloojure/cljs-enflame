@@ -2,6 +2,9 @@
   (:require
     [todomvc.enflame :as flame] ))
 
+; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
+(enable-console-print!)
+
 ; #todo these should all return a map
 
 (defn register-topics! []
