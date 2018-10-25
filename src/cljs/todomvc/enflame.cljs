@@ -1,8 +1,14 @@
 (ns todomvc.enflame ; #todo => re-state ???
   (:require
     [re-frame.core :as rf]
+    [re-frame.db :as rfdb]
+    [re-frame.events :as rfe]
+    [re-frame.fx :as rfx]
+    [re-frame.interceptor :as rfi]
     [re-frame.loggers :as rflog]
-    [re-frame.interceptor :as rfi]))
+    [re-frame.router :as rfr]
+    [re-frame.std-interceptors :as rf.std-intc]
+    ))
 
 ; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
 (enable-console-print!)
@@ -94,7 +100,61 @@
     result))
 
 ;---------------------------------------------------------------------------------------------------
+; #todo macro definterceptor (auto-set :id same as name)
+(defn interceptor ; #todo need test
+  "Creates a simple interceptor that accepts & returns state. Usage:
 
+      (flame/interceptor { :id    :some-intc
+                           :enter (fn [& args] ...)
+                           :leave (fn [& args] ...) } )
+
+  NOTE: enflame uses Pedestal-style `:enter` & `:leave` keys for the interceptor map.
+  "
+  [map-in]         ; #todo :- tsk/KeyMap
+  (js/console.log :map-in  map-in)
+  (let [enter-fn  (get-in-strict map-in [:enter])
+        leave-fn  (get-in-strict map-in [:leave])
+        before-fn (fn [ctx] (update-in ctx [:coeffects] enter-fn))
+        after-fn  (fn [ctx] (update-in ctx [ :effects]  leave-fn))]
+    {:id (get-in-strict map-in [:id])
+     :before before-fn
+     :after  after-fn}))
+; #todo allow one of :enter or :leave to be blank => identity
+; #todo add :error key like pedestal?
+
+(def event-dispatch-intc
+  (interceptor
+    {:id    :dispatch-all-intc
+     :enter identity
+     :leave (fn [state]
+              (println :dispatch-all-intc :enter state)
+              (let [dispatch-cmd      (let [cmd (:dispatch state)]
+                                        (if cmd [cmd] []))
+                    dispatch-n-cmds   (get state :dispatch-n [])
+                    dispatch-all-cmds (get state :dispatch-all [])
+                    dispatch-cmds     (vec (concat dispatch-cmd dispatch-n-cmds dispatch-all-cmds))]
+                (println :dispatch-all-intc :dispatch-cmds dispatch-cmds)
+                (doseq [dispatch-cmd dispatch-cmds]
+                  (if-not (vector? dispatch-cmd)
+                    (rflog/console :error "dispatch-all-intc: bad dispatch-cmd=" dispatch-cmd)
+                    (rfr/dispatch dispatch-cmd))))
+              (println :dispatch-all-intc :leave)
+              state)}))
+
+(def db-intc
+  (interceptor
+    {:id    :db-intc
+     :enter (fn [state]
+              (let [result (assoc state :db @rfdb/app-db)]
+                (println :db-intc :enter result)
+                result ))
+     :leave (fn [state]
+              (println :db-intc :leave :state state )
+              (let [db-val (get-in-strict state [:db])]
+                (if-not (identical? @rfdb/app-db db-val)
+                  (reset! rfdb/app-db db-val))))}))
+
+;---------------------------------------------------------------------------------------------------
 ; #todo need macro  (definterceptor todos-done {:name ...   :enter ...   :leave ...} )
 
 (defn event-handler-for!
@@ -103,15 +163,11 @@
   (when-not (vector? interceptor-chain) (throw (ex-info "illegal interceptor-chain" interceptor-chain)))
   (when-not (every? map? interceptor-chain) (throw (ex-info "illegal interceptor" interceptor-chain))) ; #todo detail intc map
   (when-not (fn? handler) (throw (ex-info "illegal handler" handler)))
-  (rf/reg-event-fx event-id interceptor-chain handler))
+  (rfe/register event-id [db-intc event-dispatch-intc interceptor-chain (rf.std-intc/fx-handler->interceptor handler)]))
 
 (defn dispatch-event [& args] (apply rf/dispatch args) )
 
 (defn dispatch-event-sync [& args] (apply rf/dispatch-sync args) )
-
-; #todo (dispatch-later state event-vec)
-; #todo    converts any existing :dispatch [xxx] => :dispatch-n [ [xxx] ]
-; #todo    appends new event-vec to :dispatch-n [...]       returns updated <state>
 
 ;****************************************************************
 ; Define built-in :db topic
@@ -136,29 +192,6 @@
 ; #todo need macro  (with-db state ...) ; hardwired for path of [:db]
 
 ; #todo macro  (with-result some-val ...) always returns some-val (like identity-with-side-effects)
-
-
- ; #todo macro definterceptor (auto-set :id same as name)
-(defn interceptor ; #todo need test
-  "Creates a simple interceptor that accepts & returns state. Usage:
-
-      (flame/interceptor { :id    :some-intc
-                           :enter (fn [& args] ...)
-                           :leave (fn [& args] ...) } )
-
-  NOTE: enflame uses Pedestal-style `:enter` & `:leave` keys for the interceptor map.
-  "
-  [map-in]         ; #todo :- tsk/KeyMap
-  (js/console.log :map-in  map-in)
-  (let [enter-fn  (get-in-strict map-in [:enter])
-        leave-fn  (get-in-strict map-in [:leave])
-        before-fn (fn [ctx] (update-in ctx [:coeffects] enter-fn))
-        after-fn  (fn [ctx] (update-in ctx [ :effects]  leave-fn))]
-  {:id (get-in-strict map-in [:id])
-   :before before-fn
-   :after  after-fn}))
-; #todo allow one of :enter or :leave to be blank => identity
-; #todo add :error key like pedestal?
 
 ;---------------------------------------------------------------------------------------------------
 ; tracing interceptor (modified rfstd/debug

@@ -8,17 +8,28 @@
 ; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
 (enable-console-print!)
 
+(defonce todo-id-atom (atom 0))
+(defn next-todo-id
+  "Returns the next todo ID in a monolithic sequence. "
+  []
+  (flame/swap-out! todo-id-atom inc))
+
 (def local-store-todos-intc ; injects state with todos from the localstore.
   (flame/interceptor
     {:id    :local-store-todos-intc
      :enter (fn     ; read in todos from localstore, and process into a sorted map
               [state]
-              (let [item-read        (.getItem js/localStorage todo-db/js-localstore-key)
-                    loaded-value     (some-> item-read
-                                       (cljs.reader/read-string))
-                    loaded-value-out (update-in loaded-value [:todos] flame/->sorted-map)
-                    state-out        (into state {:local-store-todos loaded-value-out})]
-                state-out))
+              (let [item-read         (.getItem js/localStorage todo-db/js-localstore-key)
+                    loaded-value      (some-> item-read
+                                        (cljs.reader/read-string))
+                    loaded-value-sort (update-in loaded-value [:todos] flame/->sorted-map)
+                    state-sort        (into state {:local-store-todos loaded-value-sort})
+                    todo-map          (flame/get-in-strict loaded-value-sort [:todos])
+                    todo-ids          (keys todo-map)
+                    max-id            (apply max todo-ids)]
+                (when (not-empty todo-ids)
+                  (reset! todo-id-atom (inc max-id)))
+                state-sort))
      :leave identity}))
 
 (def check-spec-intc
@@ -43,23 +54,17 @@
    flame/trace-print
   ])
 
-(defonce todo-id-atom (atom 0))
-(defn next-todo-id
-  "Returns the next todo ID in a monolithic sequence. "
-  []
-  (flame/swap-out! todo-id-atom inc))
-
 ; This event is dispatched when the app's `main` ns is loaded (todomvc.core).
 ; It establishes initial application state in `app-db`. That means merging:
 ;   1. Any todos stored in LocalStore (from the last session of this app)
 ;   2. Default initial values
 (defn initialise-db-handler [state -event-]
-  (js/console.log :initialize-db :enter state)
+  (js/console.log :initialise-db-handler :enter state)
   (let [local-store-todos        (flame/get-in-strict state [:local-store-todos :todos])
         result                   (into state
                                    {:db ; todo-db/default-db
                                     (into todo-db/default-db {:todos local-store-todos}) })]
-     (js/console.log :initialize-db :leave result)
+     (js/console.log :initialise-db-handler :leave result)
     result))
 
 (defn set-showing-handler
