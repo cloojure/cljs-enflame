@@ -27,20 +27,20 @@
     [:todos :showing]
     (fn [[todos showing] -query-]
       (let [filter-fn (condp = showing
-                        :active (complement :done)
-                        :done :done
+                        :active (complement :completed)
+                        :completed :completed
                         :all identity)]
         (filter filter-fn todos))))
 
   (flame/define-topic! :all-complete?
     [:todos]
     (fn [todos -query-]
-      (every? :done todos)))
+      (every? :completed todos)))
 
   (flame/define-topic! :completed-count
     [:todos]
     (fn [todos -query-]
-      (count (filter :done todos))))
+      (count (filter :completed todos))))
 
   (flame/define-topic! :footer-counts
     [:todos :completed-count]

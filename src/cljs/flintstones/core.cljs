@@ -28,8 +28,12 @@ Go ahead and edit it and see reloading in action. Again, or not.")
 
 ; Set up secretary navigation routing for the event-type filters
 (defn configure-routes! []
-  (secretary/defroute "/"        []       (flame/dispatch-event [:set-showing :all]))
-  (secretary/defroute "/:filter" [filter] (flame/dispatch-event [:set-showing (keyword filter)])))
+  ; Sets browser URI to one of
+  ;    /#/all
+  ;    /#/active
+  ;    /#/completed
+  (secretary/defroute "/"        []       (flame/dispatch-event [:set-showing-mode :all]))
+  (secretary/defroute "/:filter" [filter] (flame/dispatch-event [:set-showing-mode (keyword filter)])))
 ; #todo  make an `event` type & factory fn: (event :set-showing :all) instead of bare vec:  [:set-showing :all]
 ; #todo fix secretary (-> bidi?) to avoid dup (:filter x2) and make more like pedestal
     ; Although we use the secretary library below, that's mostly a historical accident. You might also consider using:

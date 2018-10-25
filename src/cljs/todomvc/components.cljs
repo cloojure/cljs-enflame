@@ -33,15 +33,15 @@
 
 (defn task-list-row []
   (let [editing (r/atom false)]
-    (fn [{:keys [id done title]}]
+    (fn [{:keys [id completed title]}]
       [:li {:class (cond-> ""
-                     done (str " completed")
+                     completed (str " completed")
                      @editing (str " editing"))}
        [:div.view
         [:input.toggle
          {:type      :checkbox
-          :checked   done
-          :on-change #(flame/dispatch-event [:toggle-done id])}]
+          :checked   completed
+          :on-change #(flame/dispatch-event [:toggle-completed id])}]
         [:label
          {:on-double-click #(reset! editing true)}
          title]
@@ -52,7 +52,7 @@
           {:class   "edit"
            :title   title
            :on-save #(if (seq %)
-                       (flame/dispatch-event [:save id %])
+                       (flame/dispatch-event [:update-title id %])
                        (flame/dispatch-event [:delete-todo id]))
            :on-stop #(reset! editing false)}])])))
 
@@ -74,7 +74,7 @@
 ; These buttons are actually hrefs (hyperliks) that will cause broswser navigation observed by History
 ; and propogated via secretary.
 (defn footer-controls []
-  (let [[num-active num-done] (flame/from-topic [:footer-counts 1 2])
+  (let [[num-active num-completed] (flame/from-topic [:footer-counts 1 2])
         showing               (flame/from-topic [:showing])
         anchor-generator-fn (fn [filter-kw txt]
                               [:a {:class (when (= filter-kw showing) "selected")
@@ -85,11 +85,11 @@
      [:ul#filters
       [:li (anchor-generator-fn :all "All")]
       [:li (anchor-generator-fn :active "Active")]
-      [:li (anchor-generator-fn :done "Completed")]]
-     (when (pos? num-done)
+      [:li (anchor-generator-fn :completed "Completed")]]
+     (when (pos? num-completed)
        [:button#clear-completed
         {:on-click #(flame/dispatch-event [:clear-completed])}
-        "Clear completed"])]))
+        "Clear Completed"])]))
 
 (defn task-entry []
   [:header#header

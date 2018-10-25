@@ -15,15 +15,15 @@
 ; can change the value in app-db so, after each event handler
 ; has run, we re-check app-db for correctness (compliance with the Schema).
 ;
-; How is this done? Look in events.cljs and you'll notice that all handlers
+; How is this completed? Look in events.cljs and you'll notice that all handlers
 ; have an "after" interceptor which does the spec re-check.
 ;
 ; None of this is strictly necessary. It could be omitted. But we find it
 ; good practice.
 (s/def ::id int?)
 (s/def ::title string?)
-(s/def ::done boolean?)
-(s/def ::todo (s/keys :req-un [::id ::title ::done]))
+(s/def ::completed boolean?)
+(s/def ::todo (s/keys :req-un [::id ::title ::completed]))
 
 (s/def ::todos (s/and ; should use the :kind kw to s/map-of (not supported yet)
                  (s/map-of ::id ::todo) ; in this map, each todo is keyed by its :id
@@ -31,8 +31,8 @@
 
 (s/def ::showing    ; what todos are shown to the user?
   #{:all            ; all todos are shown
-    :active         ; only todos whose :done is false
-    :done})         ; only todos whose :done is true
+    :active         ; only todos whose :completed is false
+    :completed})         ; only todos whose :completed is true
 (s/def ::db (s/keys :req-un [::todos ::showing]))
 
 ; -- Default app-db Value  ---------------------------------------------------
