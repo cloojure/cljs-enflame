@@ -58,6 +58,7 @@ Go ahead and edit it and see reloading in action. Again, or not.")
   ; Put an initial value into app-db. The event handler for `:initialize-db` can be found in `events.cljs`
   ; Using the sync version of dispatch means that value is in place before we go onto the next step.
   (flame/dispatch-event-sync [:initialize-db])
+  (flame/dispatch-event [:set-showing-mode :all])
   ; #todo remove this - make a built-in :init that every event-handler verifies & waits for (top priority)
   ; #todo add concept of priority to event dispatch
 

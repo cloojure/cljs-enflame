@@ -5,7 +5,6 @@
     [re-frame.events :as rfe]
     [re-frame.loggers :as rflog]
     [re-frame.router :as rfr]
-    [re-frame.std-interceptors :as rf.std-intc]
   ))
 
 ; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
