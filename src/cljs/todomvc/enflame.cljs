@@ -173,6 +173,7 @@
     (rfe/register event-id
       [db-intc event-dispatch-intc interceptor-chain handler-intc])))
 
+; #todo need plumatic schema:  event => [:kw-evt-name & args]
 (defn dispatch-event [& args] (apply rf/dispatch args) )
 
 (defn dispatch-event-sync [& args] (apply rf/dispatch-sync args) )
