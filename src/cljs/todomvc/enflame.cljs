@@ -79,9 +79,9 @@
       :else (update-in the-map parent-keys dissoc key-to-clear))))
 
 (defn ->sorted-map  ; #todo -> tupelo/core.cljc
-  "Convert the arg into a sorted-map"
-  [arg]
-  (into (sorted-map) arg))
+  "Coerces a map into a sorted-map"
+  [map-in]
+  (into (sorted-map) map-in))
 
 ;---------------------------------------------------------------------------------------------------
 (def ascii-code-return 13) ; #todo => tupelo.ascii
@@ -99,6 +99,7 @@
 ;---------------------------------------------------------------------------------------------------
 (defonce ctx-trim-queue-stack (atom true))
 (defn ctx-trim [ctx]
+  "Removes `:queue` and `:stack` entries from the context map to declutter printing"
   (if @ctx-trim-queue-stack
     (dissoc ctx :queue :stack)
     ctx))
