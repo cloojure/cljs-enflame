@@ -6,12 +6,6 @@
 ; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
 (enable-console-print!)
 
-(defonce todo-id-atom (atom 0))
-(defn next-todo-id
-  "Returns the next todo ID in a monolithic sequence. "
-  []
-  (flame/swap-out! todo-id-atom inc))
-
 (def common-interceptors
   [todo.db/check-spec-intc
    todo.db/localstore-save-intc
@@ -27,12 +21,7 @@
   (js/console.log :initialise-db-handler :enter state)
   (let [local-store-todos (flame/get-in-strict state [:local-store-todos])
         initial-db        (into todo.db/default-db {:todos local-store-todos})
-        state-out         (into state {:db initial-db})
-        todo-map          (flame/get-in-strict state-out [:db :todos])
-        todo-ids          (keys todo-map)
-        max-id            (apply max todo-ids)]
-    (when (not-empty todo-ids)
-      (reset! todo-id-atom (inc max-id)))
+        state-out         (into state {:db initial-db}) ]
     (js/console.log :initialise-db-handler :leave state-out)
     state-out))
 
@@ -45,7 +34,11 @@
 (defn add-todo-handler [state [-e- text]]
   (update-in state [:db :todos] ; #todo make this be (with-path state [:db :todos] ...) macro
     (fn [todos]     ; #todo kill this part
-      (let [new-id (next-todo-id)]
+      ; must choose a new id greater than any existing id (possibly from localstore todos)
+      (let [todo-ids (keys todos)
+            new-id   (if (not-empty todo-ids)
+                       (inc (apply max todo-ids))
+                       0)]
         (into todos {new-id {:id new-id :title text :done false}})))))
 
 (defn toggle-done-handler [state [-e- todo-id]]
