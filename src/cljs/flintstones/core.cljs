@@ -1,10 +1,8 @@
 (ns flintstones.core
   (:require
-    [ajax.core :as ajax]
     [devtools.core :as devtools]
     [goog.events]
     [flintstones.slate :as slate]
-    [oops.core :as oops]
     [reagent.core :as r]
     [secretary.core :as secretary]
     [todomvc.components :as gui]
@@ -23,6 +21,14 @@
 Go ahead and edit it and see reloading in action. Again, or not.")
 (println "Hello World! " )
 (println "Hello addition:  " (slate/add2 2 3) )
+
+;---------------------------------------------------------------------------------------------------
+(defn ajax-handler [response]
+  (.log js/console (str "cljs-ajax: successfully read:  " response))
+  (flame/dispatch-event [:ajax-response response]) )
+
+(defn ajax-error-handler [{:keys [status status-text]}]
+  (.log js/console (str "cljs-ajax: something bad happened:  " status " " status-text)))
 
 ; -- Debugging aids ----------------------------------------------------------
 (devtools/install!) ; we love https://github.com/binaryage/cljs-devtools
@@ -52,12 +58,6 @@ Go ahead and edit it and see reloading in action. Again, or not.")
     (.setEnabled true)))
 
 ;---------------------------------------------------------------------------------------------------
-;(defn handler [response]
-;  (.log js/console (str response)))
-;
-;(defn error-handler [{:keys [status status-text]}]
-;  (.log js/console (str "something bad happened: " status " " status-text)))
-
 (defn app-start
   "Initiates the cljs application"
   []
@@ -71,9 +71,13 @@ Go ahead and edit it and see reloading in action. Again, or not.")
   ; #todo remove this - make a built-in :init that every event-handler verifies & waits for (top priority)
   ; #todo add concept of priority to event dispatch
 
+
+  (flame/dispatch-event [:ajax-demo :get "/fox.txt" {:handler       ajax-handler
+                                                     :error-handler ajax-error-handler}])
+
+
   (r/render [gui/root] (js/document.getElementById "tgt-div"))
 
-  ; (ajax/GET "http://example.com")
 )
 
 (defonce figwheel-reload-count (atom 0))

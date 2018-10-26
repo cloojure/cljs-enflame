@@ -1,12 +1,16 @@
 (ns todomvc.components
   "These functions are all Reagent components"
   (:require
+    [goog.string :as gstring]
     [clojure.string :as str]
+    [oops.core :as oops]
     [reagent.core :as r]
     [todomvc.enflame :as flame]))
 
 ; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
 (enable-console-print!)
+
+(def nbsp (gstring/unescapeEntities "&nbsp;")) ; get a char we can use in hiccup   ; #todo => tupelo
 
 (defn input-field
   [{:keys [title on-save on-stop]}] ; #todo -> (with-map-vals [title on-save on-stop] ...)
@@ -114,6 +118,11 @@
 
 ;---------------------------------------------------------------------------------------------------
 
+(defn ajax-says []
+  [:div
+   [:span {:style {:color :darkgreen}} [:strong "AJAX says: "]]
+   [:span {:style {:font-style :italic}} nbsp nbsp (flame/from-topic [:ajax-response])]])
+
 (defn root []       ; was simple-component
   [:div
    [:hr]
@@ -122,6 +131,8 @@
     [:p.someclass
      "I have " [:strong "bold"]
      [:span {:style {:color "red"}} " and red"] " text."]]
+   [:hr]
+   [ajax-says]
    [:hr]
    [:div
     [todo-root]]

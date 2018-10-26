@@ -1,5 +1,7 @@
 (ns todomvc.enflame ; #todo => re-state ???
   (:require
+    [ajax.core :as ajax]
+    [oops.core :as oops]
     [re-frame.core :as rf]
     [re-frame.db :as rfdb]
     [re-frame.events :as rfe]
@@ -153,7 +155,31 @@
                   (println :app-state-intc-leave "resetting rfdb/app-db atom...")
                   (reset! rfdb/app-db app-state))))}))
 
-; #todo need pull in xhrio interceptor from https://github.com/Day8/re-frame-http-fx (cljs-http wrapper)
+(def ajax-intc
+  (interceptor
+    {:id    :ajax-intc
+     :enter identity
+     :leave (fn [ctx] ; #todo (with-result ctx ...)
+              (let [ajax (:ajax ctx)]
+               ;(println :ajax-intc :start ajax)
+                (when-not (nil? ajax)
+                  (let [method        (get-in-strict ajax [:method])
+                        uri           (get-in-strict ajax [:uri])
+                        opts-map-nils (select-keys ajax [:handler :error-handler :handler :progress-handler :error-handler
+                                                         :finally :format :response-format :params :url-params
+                                                         :timeout :headers :cookie-policy :with-credentials :body])
+                        opts-map      (into {}
+                                        (filter (fn [[k v]]
+                                                  (not (nil? v)))
+                                          opts-map-nils))]
+                   ;(println :ajax-intc :ready method uri opts-map)
+                    (condp = method
+                      :get (ajax/GET uri opts-map)
+                      :put (ajax/PUT uri opts-map)
+                      :post (ajax/POST uri opts-map)
+                      (throw (ex-info "ajax-intc: unrecognized :method" ajax))))))
+              ctx)}))
+
 
 ;---------------------------------------------------------------------------------------------------
 ; #todo need macro  (definterceptor todos-done {:name ...   :enter ...   :leave ...} )

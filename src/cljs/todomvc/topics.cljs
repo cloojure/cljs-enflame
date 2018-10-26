@@ -45,4 +45,11 @@
   (flame/define-topic! :footer-counts
     [:todos :completed-count]
     (fn [[todos completed] -query-]
-      [(- (count todos) completed) completed])))
+      [(- (count todos) completed) completed]))
+
+  (flame/define-topic! :ajax-response
+    [:app-state]
+    (fn [app-state -query-]
+      (:ajax-response app-state)))
+
+)

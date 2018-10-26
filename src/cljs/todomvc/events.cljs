@@ -1,5 +1,6 @@
 (ns todomvc.events
   (:require
+    [oops.core :as oops]
     [todomvc.app-state :as app-state]
     [todomvc.enflame :as flame] ))
 
@@ -9,7 +10,8 @@
 (def common-interceptors
   [app-state/check-spec-intc
    app-state/localstore-save-intc
-  ;flame/trace
+   flame/ajax-intc
+   ;flame/trace
    flame/trace-print
   ])
 
@@ -103,4 +105,17 @@
 
   (flame/event-handler-for! :complete-all-toggle
     common-interceptors
-    toggle-completed-all))
+    toggle-completed-all)
+
+  (flame/event-handler-for! :ajax-demo
+    common-interceptors
+    (fn [ctx [-e- method uri opts]]
+      (assoc ctx :ajax (into {:method method :uri uri} opts))))
+
+  (flame/event-handler-for! :ajax-response
+    common-interceptors
+    (fn [ctx [-e- response]]
+      (assoc-in ctx [:app-state :ajax-response] response)))
+
+
+  )
