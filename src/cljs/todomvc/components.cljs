@@ -75,11 +75,11 @@
 ; and propogated via secretary.
 (defn footer-controls []
   (let [[num-active num-completed] (flame/from-topic [:footer-counts 1 2])
-        showing             (flame/from-topic [:showing])
+        display-mode        (flame/from-topic [:display-mode])
 
         ; #todo #bug doesn't visually switch from initial :all when click :active
         anchor-generator-fn (fn [filter-kw txt]
-                              [:a {:class (when (= filter-kw showing) "selected")
+                              [:a {:class (when (= filter-kw display-mode) "selected")
                                    :href  (str "/#/" (name filter-kw))} txt])]
     [:footer#footer
      [:span#todo-count

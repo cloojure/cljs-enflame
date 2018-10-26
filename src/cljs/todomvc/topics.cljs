@@ -8,10 +8,10 @@
 ; #todo these should all return a map
 
 (defn register-topics! []
-  (flame/define-topic! :showing
+  (flame/define-topic! :display-mode
     [:app-state]
     (fn [app-state -query-]
-      (:showing app-state)))
+      (:display-mode app-state)))
 
   (flame/define-topic! :sorted-todos
     [:app-state]
@@ -24,7 +24,7 @@
       (vals sorted-todos)))
 
   (flame/define-topic! :visible-todos
-    [:todos :showing]
+    [:todos :display-mode]
     (fn [[todos showing] -query-]
       (let [filter-fn (condp = showing
                         :active (complement :completed)

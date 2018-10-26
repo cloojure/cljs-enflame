@@ -21,15 +21,16 @@
   (js/console.log :initialise-app-state :enter ctx)
   (let [local-store-todos (flame/get-in-strict ctx [:local-store-todos])
         initial-state     (into app-state/default-state {:todos local-store-todos})
+       ;initial-state     app-state/default-state ; ability to reset LocalStore during development
         ctx-out           (into ctx {:app-state initial-state})]
     (js/console.log :initialise-app-state :leave ctx-out)
     ctx-out))
 
 ; #todo need plumatic schema and tsk/KeyMap
-(defn set-showing-mode
+(defn set-display-mode
   "Saves current 'showing' mode (3 filter buttons at the bottom of the display)"
   [ctx [-e- new-filter-kw]] ; :- #{ :all, :active or :completed }
-  (assoc-in ctx [:app-state :showing] new-filter-kw))
+  (assoc-in ctx [:app-state :display-mode] new-filter-kw))
 
 (defn add-todo [ctx [-e- todo-title]]
   (update-in ctx [:app-state :todos] ; #todo make this be (with-path ctx [:app-state :todos] ...) macro
@@ -76,9 +77,9 @@
     [app-state/localstore-load-intc app-state/check-spec-intc]
     initialise-app-state)
 
-  (flame/event-handler-for! :set-showing-mode ; receives events from URL changes via History/secretary
+  (flame/event-handler-for! :set-display-mode ; receives events from URL changes via History/secretary
     [app-state/check-spec-intc]
-    set-showing-mode)
+    set-display-mode)
 
   (flame/event-handler-for! :add-todo
     common-interceptors

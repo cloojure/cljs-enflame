@@ -29,11 +29,11 @@
                  (s/map-of ::id ::todo) ; in this map, each todo is keyed by its :id
                  #(instance? PersistentTreeMap %))) ; is a sorted-map (not just a map)
 
-(s/def ::showing    ; what todos are shown to the user?
+(s/def ::display-mode    ; what todos are shown to the user?
   #{:all            ; all todos are shown
     :active         ; only todos whose :completed is false
     :completed})         ; only todos whose :completed is true
-(s/def ::app-state (s/keys :req-un [::todos ::showing]))
+(s/def ::app-state (s/keys :req-un [::todos ::display-mode]))
 
 ; -- Default :app-state Value  ---------------------------------------------------
 ; When the application first starts, this will be the value put in :app-state
@@ -43,7 +43,7 @@
 ;   2.  `events.cljs` for the registration of :initialise-state handler
 (def default-state     ; what gets put into :app-state by default.
   {:todos   (sorted-map) ; an empty list of todos. Use the (int) :id as the key
-   :showing :all})  ; show all todos
+   :display-mode :all})  ; show all todos
 
 ; -- Local Storage  ----------------------------------------------------------
 ; Part of the todomvc challenge is to store todos in LocalStorage, and

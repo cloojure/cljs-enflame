@@ -33,8 +33,8 @@ Go ahead and edit it and see reloading in action. Again, or not.")
   ;    /#/all
   ;    /#/active
   ;    /#/completed
-  (secretary/defroute "/"        []       (flame/dispatch-event [:set-showing-mode :all]))
-  (secretary/defroute "/:filter" [filter] (flame/dispatch-event [:set-showing-mode (keyword filter)])))
+  (secretary/defroute "/"        []       (flame/dispatch-event [:set-display-mode :all]))
+  (secretary/defroute "/:filter" [filter] (flame/dispatch-event [:set-display-mode (keyword filter)])))
 ; #todo  make an `event` type & factory fn: (event :set-showing :all) instead of bare vec:  [:set-showing :all]
 ; #todo fix secretary (-> bidi?) to avoid dup (:filter x2) and make more like pedestal
     ; Although we use the secretary library below, that's mostly a historical accident. You might also consider using:
@@ -67,7 +67,7 @@ Go ahead and edit it and see reloading in action. Again, or not.")
   ; Put an initial value into :app-state. The event handler for `:initialize-state` can be found in `events.cljs`
   ; Using the sync version of dispatch means that value is in place before we go onto the next step.
   (flame/dispatch-event-sync [:initialize-state])
-  (flame/dispatch-event [:set-showing-mode :all])
+  (flame/dispatch-event [:set-display-mode :all])
   ; #todo remove this - make a built-in :init that every event-handler verifies & waits for (top priority)
   ; #todo add concept of priority to event dispatch
 
