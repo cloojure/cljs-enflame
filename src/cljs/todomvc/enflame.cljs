@@ -153,6 +153,8 @@
                   (println :app-state-intc-leave "resetting rfdb/app-db atom...")
                   (reset! rfdb/app-db app-state))))}))
 
+; #todo need pull in xhrio interceptor from https://github.com/Day8/re-frame-http-fx (cljs-http wrapper)
+
 ;---------------------------------------------------------------------------------------------------
 ; #todo need macro  (definterceptor todos-done {:name ...   :enter ...   :leave ...} )
 

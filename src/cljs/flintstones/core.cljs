@@ -1,5 +1,6 @@
 (ns flintstones.core
   (:require
+    [ajax.core :as ajax]
     [devtools.core :as devtools]
     [goog.events]
     [flintstones.slate :as slate]
@@ -51,7 +52,15 @@ Go ahead and edit it and see reloading in action. Again, or not.")
     (.setEnabled true)))
 
 ;---------------------------------------------------------------------------------------------------
-(defn app-start []
+;(defn handler [response]
+;  (.log js/console (str response)))
+;
+;(defn error-handler [{:keys [status status-text]}]
+;  (.log js/console (str "something bad happened: " status " " status-text)))
+
+(defn app-start
+  "Initiates the cljs application"
+  []
   (configure-routes!)
   (events/register-handlers!)
   (topics/register-topics!)
@@ -62,7 +71,10 @@ Go ahead and edit it and see reloading in action. Again, or not.")
   ; #todo remove this - make a built-in :init that every event-handler verifies & waits for (top priority)
   ; #todo add concept of priority to event dispatch
 
-  (r/render [gui/root] (js/document.getElementById "tgt-div")))
+  (r/render [gui/root] (js/document.getElementById "tgt-div"))
+
+  ; (ajax/GET "http://example.com")
+)
 
 (defonce figwheel-reload-count (atom 0))
 (defn figwheel-reload   ; called from project.clj -> :cljsbuild -> :figwheel -> :on-jsload

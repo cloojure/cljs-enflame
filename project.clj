@@ -2,6 +2,7 @@
   :min-lein-version "2.7.1"
   :dependencies [[binaryage/devtools "0.9.4"]
                  [binaryage/oops "0.6.2"]
+                 [cljs-ajax "0.7.5"]
                  [org.clojure/clojure "1.9.0"]
                  [org.clojure/clojurescript "1.10.339"]
                  [re-frame "0.10.6"]
@@ -10,7 +11,7 @@
                  [secretary "1.2.3"]
                  [tupelo "0.9.106"]]
   :plugins [[lein-cljsbuild "1.1.7" :exclusions [[org.clojure/clojure]]]
-            [lein-figwheel "0.5.16"]
+            [lein-figwheel "0.5.17"]
             [lein-doo "0.1.10"]]
 
   :doo {:karma {:config {"plugins"       ["karma-junit-reporter"]
