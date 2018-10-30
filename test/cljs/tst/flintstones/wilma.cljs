@@ -11,6 +11,7 @@
    :leave (fn [] (println "*** TEST EACH *** - leave"))})
 
 (dotest
+  (println "wilma: testing add" )
   (is= 3 (+ 2 1)))
 
 (dotest

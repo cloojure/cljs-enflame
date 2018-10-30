@@ -5,7 +5,7 @@
 
 
 (defn define-fixture [mode interceptor-map]
-  (assert (contains? #{:each :only} mode))
+  (assert (contains? #{:each :once} mode))
   (assert (map? interceptor-map))
   (let [enter-fn   (:enter interceptor-map) ; #todo grab
         leave-fn   (:leave interceptor-map) ; #todo grab

@@ -6,15 +6,17 @@
                [flintstones.bambam :as bam :include-macros true]])
   ))
 
-(define-fixture :each
-     {:enter (fn [] (println "*** TEST EACH *** - enter"))
-      :leave (fn [] (println "*** TEST EACH *** - leave"))})
+(define-fixture :once
+     {:enter (fn [] (println "*** TEST ONCE *** - enter"))
+      :leave (fn [] (println "*** TEST ONCE *** - leave"))})
 ;--------------------------------------------------------------------------------------------------
 
 (dotest
+  (println "test 1")
   (is= 2 (+ 1 1)))
 
 (dotest
+  (println "test 2")
   (is= 5 (bam/add2 2 3)) ; this works
   (is= 3 (bam/logr-bambam
            (inc 0)
