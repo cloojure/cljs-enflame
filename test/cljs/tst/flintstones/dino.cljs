@@ -3,9 +3,9 @@
     [flintstones.test-cljs :refer [dotest is isnt is= isnt= testing use-fixtures]]
     [dinoPhony] ))
 
-(use-fixtures :once
-  {:before (fn [] (newline) (println "test once - enter"))
-   :after  (fn [] (println "test once - leave"))})
+(use-fixtures :each
+  {:enter (fn [] (println "*** TEST EACH *** - enter"))
+   :leave (fn [] (println "*** TEST EACH *** - leave"))})
 
 (dotest (is= 5 (+ 2 3)))
 ; (deftest t-will-fail (is (= 95 (+ 2 3))))

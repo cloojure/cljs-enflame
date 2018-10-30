@@ -1,7 +1,26 @@
 (ns flintstones.test-cljs ; this file defines macros
   (:require [cljs.test :as ct]))
 
-(defmacro use-fixtures  [& forms] `(ct/use-fixtures ~@forms))
+
+(comment ; #todo  new format?
+  (define-fixtures  ; #todo cljs allows only one choice of :each of :once   :(
+    {:once {:enter (fn [] (println "*** TEST ONCE *** - enter"))
+            :leave (fn [] (println "*** TEST ONCE *** - leave"))}}
+    {:each {:enter (fn [] (println "*** TEST EACH *** - enter"))
+            :leave (fn [] (println "*** TEST EACH *** - leave"))}})
+  ;#todo maybe define
+  ;#todo   (def-fixture-global {intc-fixture-map} ...)  as global `use-fixtures`
+  ;#todo   (def-fixture-local abc {abc-fixture-intc} ...)   defines entry in ns-local fixture map for (dotest-with abc ...)
+)
+
+(defmacro use-fixtures ; #todo maybe (define-fixture ...)
+  [mode interceptor-map]
+  (let [enter-fn (:enter interceptor-map) ; #todo grab
+        leave-fn (:leave interceptor-map)] ; #todo grab
+   `(ct/use-fixtures ~mode
+      {:before ~enter-fn
+       :after  ~leave-fn})))
+
 (defmacro deftest       [& forms] `(ct/deftest ~@forms))
 (defmacro testing       [& forms] `(ct/testing ~@forms))
 (defmacro is            [& forms] `(ct/is ~@forms))

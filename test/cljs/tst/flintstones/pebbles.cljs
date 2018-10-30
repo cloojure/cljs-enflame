@@ -3,9 +3,9 @@
     [clojure.string :as str]
     [flintstones.test-cljs :refer [dotest is isnt is= isnt= testing use-fixtures]] ))
 
-(use-fixtures :once
-  {:before (fn [] (newline) (println "test once - enter"))
-   :after  (fn [] (println "test once - leave"))})
+(use-fixtures :each
+  {:enter (fn [] (println "*** TEST EACH *** - enter"))
+   :leave (fn [] (println "*** TEST EACH *** - leave"))})
 
 (dotest
   (is= 2 (+ 1 1))   ; this works

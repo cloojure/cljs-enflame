@@ -7,8 +7,8 @@
   ))
 
 (use-fixtures :each
-  {:before (fn [] (newline) (println "test each - enter"))
-   :after  (fn [] (println "test each - leave"))})
+  {:enter (fn [] (println "*** TEST EACH *** - enter"))
+   :leave (fn [] (println "*** TEST EACH *** - leave"))})
 
 (dotest
   (is= 3 (+ 2 1)))

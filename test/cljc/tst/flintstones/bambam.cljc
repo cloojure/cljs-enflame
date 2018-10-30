@@ -6,28 +6,9 @@
                [flintstones.bambam :as bam :include-macros true]])
   ))
 
-;****************************************************************
-;***** NOTE that fixtures are totally different clj vs cljs *****
-;****************************************************************
-
-#?(:clj
-   (do
-     (defn my-clj-fixture [tst-fn]
-       (newline) (println "test each - enter")
-       (tst-fn)
-       (println "test each - leave"))
-
-     (use-fixtures :each my-clj-fixture)
-))
-
-;****************************************************************
-;***** NOTE that fixtures are totally different clj vs cljs *****
-;****************************************************************
-#?(:cljs
-   (use-fixtures :each
-     {:before (fn [] (newline) (println "test each - enter"))
-      :after  (fn [] (println "test each - leave"))}))
-
+(use-fixtures :each
+     {:enter (fn [] (println "*** TEST EACH *** - enter"))
+      :leave (fn [] (println "*** TEST EACH *** - leave"))})
 ;--------------------------------------------------------------------------------------------------
 
 (dotest

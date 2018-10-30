@@ -3,6 +3,16 @@
     [clojure.string :as str]
     [clojure.test :as ct] ))
 
+
+(defn use-fixtures [mode interceptor-map]
+  (let [enter-fn   (:enter interceptor-map) ; #todo grab
+        leave-fn   (:leave interceptor-map) ; #todo grab
+        fixture-fn (fn [tst-fn]
+                     (enter-fn)
+                     (tst-fn)
+                     (leave-fn))]
+    (ct/use-fixtures mode fixture-fn)))
+
 (defn normalize-str
   "Returns a 'normalized' version of str-in, stripped of leading/trailing
    blanks, and with all non-alphanumeric chars converted to hyphens."
@@ -11,7 +21,6 @@
     str/trim
     (str/replace #"[^a-zA-Z0-9]" "-")))
 
-(defn use-fixtures [& args] (apply ct/use-fixtures args))
 (defmacro testing [& forms] `(ct/testing ~@forms))
 
 (defmacro is
