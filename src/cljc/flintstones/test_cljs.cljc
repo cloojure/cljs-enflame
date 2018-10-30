@@ -1,7 +1,6 @@
 (ns flintstones.test-cljs ; this file defines macros
   (:require [cljs.test :as ct]))
 
-
 (comment ; #todo  new format?
   (define-fixtures  ; #todo cljs allows only one choice of :each of :once   :(
     {:once {:enter (fn [] (println "*** TEST ONCE *** - enter"))

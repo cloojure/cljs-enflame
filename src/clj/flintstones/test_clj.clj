@@ -3,7 +3,6 @@
     [clojure.string :as str]
     [clojure.test :as ct] ))
 
-
 (defn define-fixture [mode interceptor-map]
   (assert (contains? #{:each :once} mode))
   (assert (map? interceptor-map))
