@@ -4,7 +4,9 @@
     [clojure.test :as ct] ))
 
 
-(defn use-fixtures [mode interceptor-map]
+(defn define-fixture [mode interceptor-map]
+  (assert (contains? #{:each :only} mode))
+  (assert (map? interceptor-map))
   (let [enter-fn   (:enter interceptor-map) ; #todo grab
         leave-fn   (:leave interceptor-map) ; #todo grab
         fixture-fn (fn [tst-fn]
@@ -12,6 +14,18 @@
                      (tst-fn)
                      (leave-fn))]
     (ct/use-fixtures mode fixture-fn)))
+
+(defmacro with-interceptor ; #todo => tupelo.core ;  and also (with-interceptors [intc-1 intc-2 ...]  & forms)
+  "Generic wrapper functionality"
+  [interceptor-map & forms]
+  (assert (map? interceptor-map)) ; #todo (validate map? interceptor-map)
+  (let [enter-fn (:enter interceptor-map) ; #todo grab
+        leave-fn (:leave interceptor-map)] ; #todo grab
+    `(do
+       (enter-fn)
+       (let [result (do ~@forms)]
+         (leave-fn)
+         result))))
 
 (defn normalize-str
   "Returns a 'normalized' version of str-in, stripped of leading/trailing

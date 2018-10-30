@@ -13,13 +13,27 @@
   ;#todo   (def-fixture-local abc {abc-fixture-intc} ...)   defines entry in ns-local fixture map for (dotest-with abc ...)
 )
 
-(defmacro use-fixtures ; #todo maybe (define-fixture ...)
+(defmacro define-fixture ; #todo maybe (define-fixture ...)
   [mode interceptor-map]
+  (assert (contains? #{:each :only} mode))
+  (assert (map? interceptor-map))
   (let [enter-fn (:enter interceptor-map) ; #todo grab
         leave-fn (:leave interceptor-map)] ; #todo grab
-   `(ct/use-fixtures ~mode
-      {:before ~enter-fn
-       :after  ~leave-fn})))
+    `(ct/use-fixtures ~mode
+       {:before ~enter-fn
+        :after  ~leave-fn})))
+
+(defmacro with-interceptor ; #todo => tupelo.core ;  and also (with-interceptors [intc-1 intc-2 ...]  & forms)
+  "Generic wrapper functionality"
+  [interceptor-map & forms]
+  (assert (map? interceptor-map)) ; #todo (validate map? interceptor-map)
+  (let [enter-fn (:enter interceptor-map) ; #todo grab
+        leave-fn (:leave interceptor-map)] ; #todo grab
+    `(do
+       (enter-fn)
+       (let [result (do ~@forms)]
+         (leave-fn)
+         result))))
 
 (defmacro deftest       [& forms] `(ct/deftest ~@forms))
 (defmacro testing       [& forms] `(ct/testing ~@forms))

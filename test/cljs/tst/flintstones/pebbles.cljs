@@ -1,9 +1,9 @@
 (ns tst.flintstones.pebbles
   (:require
     [clojure.string :as str]
-    [flintstones.test-cljs :refer [dotest is isnt is= isnt= testing use-fixtures]] ))
+    [flintstones.test-cljs :refer [dotest is isnt is= isnt= testing define-fixture]] ))
 
-(use-fixtures :each
+(define-fixture :each
   {:enter (fn [] (println "*** TEST EACH *** - enter"))
    :leave (fn [] (println "*** TEST EACH *** - leave"))})
 

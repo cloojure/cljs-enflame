@@ -1,12 +1,12 @@
 (ns tst.flintstones.bambam
   (:require
-    #?@(:clj [[flintstones.test-clj   :refer [dotest is isnt is= isnt= testing use-fixtures]]
+    #?@(:clj [[flintstones.test-clj   :refer [dotest is isnt is= isnt= testing define-fixture]]
               [flintstones.bambam :as bam]])
-    #?@(:cljs [[flintstones.test-cljs :refer [dotest is isnt is= isnt= testing use-fixtures]]
+    #?@(:cljs [[flintstones.test-cljs :refer [dotest is isnt is= isnt= testing define-fixture]]
                [flintstones.bambam :as bam :include-macros true]])
   ))
 
-(use-fixtures :each
+(define-fixture :each
      {:enter (fn [] (println "*** TEST EACH *** - enter"))
       :leave (fn [] (println "*** TEST EACH *** - leave"))})
 ;--------------------------------------------------------------------------------------------------
