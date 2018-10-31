@@ -5,7 +5,7 @@
 
     #?@(:cljs [[flintstones.test-cljs :refer [dotest is isnt is= isnt=]]
                [flintstones.slate :as slate :include-macros true]])
-    ))
+  ))
 
 (dotest
   (is= 2 (+ 1 1))   ; this works
