@@ -1,29 +1,40 @@
 (ns flintstones.test-clj
+  (:use tupelo.core)
   (:require
     [clojure.string :as str]
     [clojure.test :as ct] ))
 
-(defn define-fixture [mode interceptor-map]
+(defn define-fixture-impl
+  [mode interceptor-map meta-form]
   (assert (contains? #{:each :once} mode))
   (assert (map? interceptor-map))
-  (let [enter-fn   (:enter interceptor-map) ; #todo grab
+  (let [enter-fn (grab :enter interceptor-map) ; #todo grab
         leave-fn   (:leave interceptor-map) ; #todo grab
-        fixture-fn (fn [tst-fn]
-                     (enter-fn)
-                     (tst-fn)
-                     (leave-fn))]
-    (ct/use-fixtures mode fixture-fn)))
+        impl-out `(let [~'ctx      ~(select-keys meta-form [:line :column])
+                        ~'fixture-fn (fn [~'tst-fn]
+                                     (~enter-fn ~'ctx) ; #todo must pass ctx output from :enter-fn to :leave-fn
+                                     (~'tst-fn)
+                                     (~leave-fn ~'ctx))]
+       (ct/use-fixtures ~mode ~'fixture-fn))]
+    impl-out))
+
+(defmacro define-fixture
+  [mode interceptor-map]
+  (let [meta-form (meta &form) ]
+    (spyx meta-form)
+    (define-fixture-impl mode interceptor-map meta-form)))
 
 (defmacro with-interceptor ; #todo => tupelo.core ;  and also (with-interceptors [intc-1 intc-2 ...]  & forms)
   "Generic wrapper functionality"
   [interceptor-map & forms]
   (assert (map? interceptor-map)) ; #todo (validate map? interceptor-map)
   (let [enter-fn (:enter interceptor-map) ; #todo grab
-        leave-fn (:leave interceptor-map)] ; #todo grab
+        leave-fn (:leave interceptor-map) ; #todo grab
+        ctx (select-keys (meta &form) [:file :line]) ]
     `(do
-       (enter-fn)
+       (enter-fn ctx)
        (let [result (do ~@forms)]
-         (leave-fn)
+         (leave-fn ctx)
          result))))
 
 (defn normalize-str
