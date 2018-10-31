@@ -4,8 +4,8 @@
     [flintstones.test-cljs :refer [dotest is isnt is= isnt= testing define-fixture]] ))
 
 (define-fixture :each
-  {:enter (fn [] (println "*** TEST EACH *** - enter"))
-   :leave (fn [] (println "*** TEST EACH *** - leave"))})
+  {:enter (fn [ctx] (println "*** TEST EACH *** - enter"))
+   :leave (fn [ctx] (println "*** TEST EACH *** - leave"))})
 
 (dotest
   (is= 2 (+ 1 1))   ; this works

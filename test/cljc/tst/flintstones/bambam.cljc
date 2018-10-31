@@ -7,8 +7,8 @@
   ))
 
 (define-fixture :once
-     {:enter (fn [] (println "*** TEST ONCE *** - enter"))
-      :leave (fn [] (println "*** TEST ONCE *** - leave"))})
+     {:enter (fn [ctx] (println "*** TEST ONCE *** - enter ctx=" ctx))
+      :leave (fn [ctx] (println "*** TEST ONCE *** - leave ctx=" ctx))})
 ;--------------------------------------------------------------------------------------------------
 
 (dotest

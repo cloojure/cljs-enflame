@@ -19,8 +19,8 @@
   (let [enter-fn (:enter interceptor-map) ; #todo grab
         leave-fn (:leave interceptor-map)] ; #todo grab
     `(ct/use-fixtures ~mode
-       {:before ~enter-fn
-        :after  ~leave-fn})))
+       {:before #(~enter-fn {})
+        :after  #(~leave-fn {})})))
 
 (defmacro with-interceptor ; #todo => tupelo.core ;  and also (with-interceptors [intc-1 intc-2 ...]  & forms)
   "Generic wrapper functionality"
