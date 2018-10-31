@@ -29,8 +29,7 @@
   (assert (map? interceptor-map)) ; #todo (validate map? interceptor-map)
   (let [enter-fn  (:enter interceptor-map) ; #todo grab
         leave-fn  (:leave interceptor-map) ; #todo grab
-        meta-form (meta &form)
-        ctx       meta-form ]
+        ctx       (meta &form) ]
     `(do
        (enter-fn ctx)
        (let [result (do ~@forms)]

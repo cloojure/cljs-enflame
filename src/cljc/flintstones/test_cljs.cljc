@@ -18,8 +18,7 @@
   (assert (map? interceptor-map))
   (let [enter-fn  (:enter interceptor-map) ; #todo grab
         leave-fn  (:leave interceptor-map) ; #todo grab
-        meta-form (meta &form)
-        ctx       meta-form]
+        ctx       (meta &form)]
     `(ct/use-fixtures ~mode
        {:before #(~enter-fn ~ctx)
         :after  #(~leave-fn ~ctx)})))
