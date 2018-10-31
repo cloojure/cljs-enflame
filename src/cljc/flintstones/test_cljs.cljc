@@ -16,23 +16,13 @@
   [mode interceptor-map]
   (assert (contains? #{:each :once} mode))
   (assert (map? interceptor-map))
-  (let [enter-fn (:enter interceptor-map) ; #todo grab
-        leave-fn (:leave interceptor-map)] ; #todo grab
+  (let [enter-fn  (:enter interceptor-map) ; #todo grab
+        leave-fn  (:leave interceptor-map) ; #todo grab
+        meta-form (meta &form)
+        ctx       meta-form]
     `(ct/use-fixtures ~mode
-       {:before #(~enter-fn {})
-        :after  #(~leave-fn {})})))
-
-(defmacro with-interceptor ; #todo => tupelo.core ;  and also (with-interceptors [intc-1 intc-2 ...]  & forms)
-  "Generic wrapper functionality"
-  [interceptor-map & forms]
-  (assert (map? interceptor-map)) ; #todo (validate map? interceptor-map)
-  (let [enter-fn (:enter interceptor-map) ; #todo grab
-        leave-fn (:leave interceptor-map)] ; #todo grab
-    `(do
-       (enter-fn)
-       (let [result (do ~@forms)]
-         (leave-fn)
-         result))))
+       {:before #(~enter-fn ~ctx)
+        :after  #(~leave-fn ~ctx)})))
 
 (defmacro deftest       [& forms] `(ct/deftest ~@forms))
 (defmacro testing       [& forms] `(ct/testing ~@forms))

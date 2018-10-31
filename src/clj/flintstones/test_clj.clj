@@ -10,7 +10,7 @@
   (assert (map? interceptor-map))
   (let [enter-fn (grab :enter interceptor-map) ; #todo grab
         leave-fn   (:leave interceptor-map) ; #todo grab
-        impl-out `(let [~'ctx      ~(select-keys meta-form [:line :column])
+        impl-out `(let [~'ctx      ~meta-form
                         ~'fixture-fn (fn [~'tst-fn]
                                      (~enter-fn ~'ctx) ; #todo must pass ctx output from :enter-fn to :leave-fn
                                      (~'tst-fn)
@@ -21,16 +21,16 @@
 (defmacro define-fixture
   [mode interceptor-map]
   (let [meta-form (meta &form) ]
-    (spyx meta-form)
     (define-fixture-impl mode interceptor-map meta-form)))
 
 (defmacro with-interceptor ; #todo => tupelo.core ;  and also (with-interceptors [intc-1 intc-2 ...]  & forms)
   "Generic wrapper functionality"
   [interceptor-map & forms]
   (assert (map? interceptor-map)) ; #todo (validate map? interceptor-map)
-  (let [enter-fn (:enter interceptor-map) ; #todo grab
-        leave-fn (:leave interceptor-map) ; #todo grab
-        ctx (select-keys (meta &form) [:file :line]) ]
+  (let [enter-fn  (:enter interceptor-map) ; #todo grab
+        leave-fn  (:leave interceptor-map) ; #todo grab
+        meta-form (meta &form)
+        ctx       meta-form ]
     `(do
        (enter-fn ctx)
        (let [result (do ~@forms)]
