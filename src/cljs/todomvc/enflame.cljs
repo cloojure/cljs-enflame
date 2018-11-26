@@ -1,12 +1,12 @@
 (ns todomvc.enflame ; #todo => re-state ???
   (:require
     [ajax.core :as ajax]
-    [oops.core :as oops]
     [re-frame.core :as rf]
     [re-frame.db :as rfdb]
     [re-frame.events :as rfe]
     [re-frame.loggers :as rflog]
     [re-frame.router :as rfr]
+    [tupelo.core :as t]
   ))
 
 ; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
@@ -51,26 +51,17 @@
 ; #TODO CHANGE ALL HANDLERS to be (defn some-handler [ctx event]   (with-map-vals event [id new-filter-kw] ...)
 ;---------------------------------------------------------------------------------------------------
 
+(defn pluralize-with
+  [n base-str]
+  (if (= n 1)
+    base-str
+    (t/glue base-str \s)))
+
 (defn swap-out!     ; #todo => tupelo/core.cljc
   "Just like clojure.core/swap!, but returns the old value"
   [tgt-atom swap-fn & args]
   (let [[old -new-] (apply swap-vals! tgt-atom swap-fn args)]
     old))
-
-(defn dissoc-in
-  "A sane version of dissoc-in that will not delete intermediate keys.
-   When invoked as (dissoc-in the-map [:k1 :k2 :k3... :kZ]), acts like
-   (clojure.core/update-in the-map [:k1 :k2 :k3...] dissoc :kZ). That is, only
-   the map entry containing the last key :kZ is removed, and all map entries
-   higher than kZ in the hierarchy are unaffected."
-  [the-map keys-vec ]
-  (let [num-keys     (count keys-vec)
-        key-to-clear (last keys-vec)
-        parent-keys  (butlast keys-vec)]
-    (cond
-      (zero? num-keys) the-map
-      (= 1 num-keys) (dissoc the-map key-to-clear)
-      :else (update-in the-map parent-keys dissoc key-to-clear))))
 
 (defn ->sorted-map  ; #todo -> tupelo/core.cljc
   "Coerces a map into a sorted-map"
@@ -83,12 +74,6 @@
 (defn event-val [event]  (-> event .-target .-value))
 
 (defn from-topic [topic] @(rf/subscribe topic)) ; #todo was (listen ...)
-
-(defn get-in-strict [map path]
-  (let [result (get-in map path ::not-found)]
-    (when (= result ::not-found)
-      (throw (ex-info "get-in-strict: path not found" {:map map :path path})))
-    result))
 
 ;---------------------------------------------------------------------------------------------------
 (defonce ctx-trim-queue-stack (atom true))
@@ -109,9 +94,9 @@
   NOTE: enflame uses Pedestal-style `:enter` & `:leave` keys for the interceptor map.
   "
   [map-in]         ; #todo :- tsk/KeyMap
-  {:id     (get-in-strict map-in [:id])
-   :before (get-in-strict map-in [:enter])
-   :after  (get-in-strict map-in [:leave])})
+  {:id     (t/grab :id map-in)
+   :before (t/grab :enter map-in)
+   :after  (t/grab :leave map-in)})
 ; #todo allow one of :enter or :leave to be blank => identity
 ; #todo add :error key like pedestal?
 
@@ -120,37 +105,37 @@
     {:id    :dispatch-all-intc
      :enter identity
      :leave (fn [ctx] ; #todo (with-result ctx ...)
-             ;(println :dispatch-all-intc :enter (ctx-trim ctx))
+              ;(println :dispatch-all-intc :enter (ctx-trim ctx))
               (let [dispatch-cmd      (let [cmd (:dispatch ctx)]
                                         (if cmd [cmd] []))
                     dispatch-n-cmds   (get ctx :dispatch-n [])
                     dispatch-all-cmds (get ctx :dispatch-all [])
-                    dispatch-cmds     (vec (concat dispatch-cmd dispatch-n-cmds dispatch-all-cmds))]
-               ;(println :dispatch-all-intc :dispatch-cmds dispatch-cmds)
+                    dispatch-cmds     (t/glue dispatch-cmd dispatch-n-cmds dispatch-all-cmds)]
+                ;(println :dispatch-all-intc :dispatch-cmds dispatch-cmds)
                 (doseq [dispatch-cmd dispatch-cmds]
                   (if-not (vector? dispatch-cmd)
                     (rflog/console :error "dispatch-all-intc: bad dispatch-cmd=" dispatch-cmd)
                     (rfr/dispatch dispatch-cmd))))
-             ;(println :dispatch-all-intc :leave)
+              ;(println :dispatch-all-intc :leave)
               ctx)}))
 
 (def app-state-intc
   (interceptor
     {:id    :app-state-intc
      :enter (fn [ctx]
-             ;(js/console.info :app-state-intc-enter :begin (ctx-trim ctx))
+              ;(js/console.info :app-state-intc-enter :begin (ctx-trim ctx))
               (let [ctx-out (-> ctx
                               (into {:data/type :enflame/context
-                                     :app-state        @rfdb/app-db
+                                     :app-state @rfdb/app-db
                                      ; KLUDGE: Move `:event` from :coeffects sub-map to parent `context` map.
                                      ; KLUDGE:   Allows us to use unmodified re-frame as "hosting" lib
-                                     :event     (get-in-strict ctx [:coeffects :event])})
+                                     :event     (t/fetch-in ctx [:coeffects :event])})
                               (dissoc :coeffects))]
-               ;(js/console.info :app-state-intc-enter :end (ctx-trim ctx-out))
+                ;(js/console.info :app-state-intc-enter :end (ctx-trim ctx-out))
                 ctx-out))
      :leave (fn [ctx]
-             ;(println :app-state-intc-leave :begin (ctx-trim ctx))
-              (let [app-state (get-in-strict ctx [:app-state])]
+              ;(println :app-state-intc-leave :begin (ctx-trim ctx))
+              (let [app-state (t/grab :app-state ctx)]
                 (when-not (identical? @rfdb/app-db app-state)
                   (println :app-state-intc-leave "resetting rfdb/app-db atom...")
                   (reset! rfdb/app-db app-state))))}))
@@ -161,18 +146,19 @@
      :enter identity
      :leave (fn [ctx] ; #todo (with-result ctx ...)
               (let [ajax (:ajax ctx)]
-               ;(println :ajax-intc :start ajax)
+                ;(println :ajax-intc :start ajax)
                 (when-not (nil? ajax)
-                  (let [method        (get-in-strict ajax [:method])
-                        uri           (get-in-strict ajax [:uri])
-                        opts-map-nils (select-keys ajax [:handler :error-handler :handler :progress-handler :error-handler
-                                                         :finally :format :response-format :params :url-params
-                                                         :timeout :headers :cookie-policy :with-credentials :body])
+                  (let [method        (t/grab :method ajax)
+                        uri           (t/grab :uri ajax)
+                        opts-map-nils (t/submap-by-keys ajax
+                                        [:handler :error-handler :handler :progress-handler :error-handler :finally
+                                         :format :response-format :params :url-params :timeout :headers :cookie-policy
+                                         :with-credentials :body])
                         opts-map      (into {}
                                         (filter (fn [[k v]]
-                                                  (not (nil? v)))
+                                                  (t/not-nil? v))
                                           opts-map-nils))]
-                   ;(println :ajax-intc :ready method uri opts-map)
+                    ;(println :ajax-intc :ready method uri opts-map)
                     (condp = method
                       :get (ajax/GET uri opts-map)
                       :put (ajax/PUT uri opts-map)
@@ -193,7 +179,7 @@
   (let [handler-intc (interceptor
                        {:id    event-id
                         :enter (fn [ctx]
-                                 (let [event   (get-in-strict ctx [:event])
+                                 (let [event   (t/grab :event ctx)
                                        ctx-out (handler-fn ctx event)]
                                    ctx-out))
                         :leave identity})]
@@ -244,17 +230,17 @@
      :enter (fn trace-enter ; #todo => (with-result context ...)
               [ctx]
               (let [ctx (ctx-trim ctx)]
-                (rflog/console :log "Handling re-frame event:" (get-in-strict ctx [:event]))
+                (rflog/console :log "Handling re-frame event:" (t/grab :event ctx))
                 (rflog/console :log :trace :enter ctx))
               ctx)
 
      :leave (fn trace-leave ; #todo => (with-result context ...)
               [ctx]
               (let [ctx (ctx-trim ctx)]
-               ;(rflog/console :group "leaving trace-intc...")
+                ;(rflog/console :group "leaving trace-intc...")
                 (rflog/console :log :trace :leave ctx)
-               ;(rflog/console :groupEnd)
-              )
+                ;(rflog/console :groupEnd)
+                )
               ctx)}))
 
 (def trace-print
@@ -271,7 +257,7 @@
      :enter (fn trace-enter
               [ctx]
               (let [ctx (ctx-trim ctx)]
-                (println :trace "Handling re-frame event:" (get-in-strict ctx [:event]))
+                (println :trace "Handling re-frame event:" (t/grab :event ctx))
                 (println :trace :enter ctx))
               ctx)
 

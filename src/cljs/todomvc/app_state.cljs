@@ -2,7 +2,8 @@
   (:require [cljs.reader]
             [cljs.spec.alpha :as s]
             [re-frame.core :as rf]
-            [todomvc.enflame :as flame] ))
+            [todomvc.enflame :as flame]
+            [tupelo.core :as t]))
 
 ; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
 (enable-console-print!)
@@ -58,7 +59,7 @@
     {:id    :check-spec-intc
      :enter identity
      :leave (fn [ctx]
-              (let [app-state (flame/get-in-strict ctx [:app-state])]
+              (let [app-state (t/grab :app-state ctx)]
                 (when-not (s/valid? ::app-state app-state)
                   (println :check-spec-intc :ctx ctx)
                   (println :failed-check (s/explain-str ::app-state app-state))
@@ -71,7 +72,7 @@
     {:id    :localstore-save-intc
      :enter identity
      :leave (fn [ctx]
-              (let [todos   (flame/get-in-strict ctx [:app-state :todos])
+              (let [todos   (t/fetch-in ctx [:app-state :todos])
                     edn-str (str todos)] ; sorted-map written as an edn string
                ;(js/console.info :todos->local-store todos)
                 (.setItem js/localStorage js-localstore-key edn-str))

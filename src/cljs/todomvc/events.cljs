@@ -2,7 +2,8 @@
   (:require
     [oops.core :as oops]
     [todomvc.app-state :as app-state]
-    [todomvc.enflame :as flame] ))
+    [todomvc.enflame :as flame]
+    [tupelo.core :as t]))
 
 ; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
 (enable-console-print!)
@@ -21,7 +22,7 @@
 ;   2. Default initial values
 (defn initialise-app-state [ctx -event-]
   (js/console.log :initialise-app-state :enter ctx)
-  (let [local-store-todos (flame/get-in-strict ctx [:local-store-todos])
+  (let [local-store-todos (t/grab :local-store-todos ctx)
         initial-state     (into app-state/default-state {:todos local-store-todos})
        ;initial-state     app-state/default-state ; ability to reset LocalStore during development
         ctx-out           (into ctx {:app-state initial-state})]
@@ -51,7 +52,7 @@
   (assoc-in ctx [:app-state :todos todo-id :title] todo-title))
 
 (defn delete-todo [ctx [-e- todo-id]]
-  (flame/dissoc-in ctx [:app-state :todos todo-id]))
+  (t/dissoc-in ctx [:app-state :todos todo-id]))
 
 (defn clear-completed-todos
   [ctx -event-]

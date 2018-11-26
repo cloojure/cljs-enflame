@@ -5,7 +5,8 @@
     [clojure.string :as str]
     [oops.core :as oops]
     [reagent.core :as r]
-    [todomvc.enflame :as flame]))
+    [todomvc.enflame :as flame]
+    [tupelo.core :as t]))
 
 ; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
 (enable-console-print!)
@@ -79,7 +80,7 @@
 ; and propogated via secretary.
 (defn footer-controls []
   (let [[num-active num-completed] (flame/from-topic [:footer-counts 1 2])
-        display-mode        (flame/from-topic [:display-mode])
+        display-mode               (flame/from-topic [:display-mode])
 
         ; #todo #bug doesn't visually switch from initial :all when click :active
         anchor-generator-fn (fn [filter-kw txt]
@@ -87,7 +88,7 @@
                                    :href  (str "/#/" (name filter-kw))} txt])]
     [:footer#footer
      [:span#todo-count
-      [:strong num-active] " " (case num-active 1 "item" "items") " left"]
+      [:strong num-active] (flame/pluralize-with num-active " item") " left"]
      [:ul#filters
       [:li (anchor-generator-fn :all "All")]
       [:li (anchor-generator-fn :active "Active")]
@@ -103,14 +104,14 @@
    [input-field
     {:id          "new-todo"
      :placeholder "What needs to be done?"
-     :on-save     #(when-not (empty? (str/trim %))
+     :on-save     #(when (t/not-empty? (str/trim %))
                      (flame/dispatch-event [:add-todo %]))}]])
 
 (defn todo-root []
   [:div
    [:section#todoapp
     [task-entry]
-    (when-not (empty? (flame/from-topic [:todos]))
+    (when (t/not-empty? (flame/from-topic [:todos]))
       [task-list])
     [footer-controls]]
    [:footer#info
