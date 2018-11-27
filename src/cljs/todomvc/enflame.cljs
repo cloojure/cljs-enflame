@@ -128,12 +128,12 @@
      :enter identity
      :leave (fn [ctx] ; #todo (with-result ctx ...)
               (let [ajax (:ajax ctx)]
-                (t/spyx :ajax-intc-start ctx )
-                (t/spyx :ajax-intc-start ajax)
+               ;(t/spyx :ajax-intc-start ctx )
+               ;(t/spyx :ajax-intc-start ajax)
                 (when-not (nil? ajax)
                   (let [method        (t/grab :method ajax)
                         uri           (t/grab :uri ajax)
-                        opts-map-nils (t/submap-by-keys ajax
+                        opts-map-nils (select-keys ajax ; #todo why look for all the (nonexistent) keys???
                                         [:handler :error-handler :handler :progress-handler :error-handler :finally
                                          :format :response-format :params :url-params :timeout :headers :cookie-policy
                                          :with-credentials :body])
@@ -141,7 +141,7 @@
                                         (filter (fn [[k v]]
                                                   (t/not-nil? v))
                                           opts-map-nils))]
-                    (println :ajax-intc :ready method uri opts-map)
+                   ;(println :ajax-intc :ready method uri opts-map)
                     (condp = method
                       :get (ajax/GET uri opts-map)
                       :put (ajax/PUT uri opts-map)
