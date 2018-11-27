@@ -86,8 +86,8 @@
               (let [item-read    (.getItem js/localStorage js-localstore-key)
                     loaded-value (some-> item-read
                                    (cljs.reader/read-string) ; convert edn string => actual map
-                                   (flame/->sorted-map)) ; coerce to a sorted map (from unsorted map)
-                    ctx-sort   (into ctx {:local-store-todos loaded-value})]
+                                   (t/->sorted-map)) ; coerce to a sorted map (from unsorted map)
+                    ctx-sort   (t/glue ctx {:local-store-todos loaded-value})]
                 ctx-sort))
      :leave identity}))
 

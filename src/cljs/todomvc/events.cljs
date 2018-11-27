@@ -23,9 +23,9 @@
 (defn initialise-app-state [ctx -event-]
   (js/console.log :initialise-app-state :enter ctx)
   (let [local-store-todos (t/grab :local-store-todos ctx)
-        initial-state     (into app-state/default-state {:todos local-store-todos})
+        initial-state     (t/glue app-state/default-state {:todos local-store-todos})
        ;initial-state     app-state/default-state ; ability to reset LocalStore during development
-        ctx-out           (into ctx {:app-state initial-state})]
+        ctx-out           (t/glue ctx {:app-state initial-state})]
     (js/console.log :initialise-app-state :leave ctx-out)
     ctx-out))
 

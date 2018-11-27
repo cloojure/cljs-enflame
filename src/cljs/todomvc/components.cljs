@@ -6,7 +6,10 @@
     [oops.core :as oops]
     [reagent.core :as r]
     [todomvc.enflame :as flame]
-    [tupelo.core :as t]))
+    [tupelo.core :as t]
+    [tupelo.char :as char]
+    [tupelo.string :as ts]
+    ))
 
 ; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
 (enable-console-print!)
@@ -32,8 +35,8 @@
           :on-change   #(reset! text-val (flame/event-val %))
           :on-key-down #(let [rcvd (.-which %)] ; KeyboardEvent property
                           (condp = rcvd
-                            flame/ascii-code-return (save-fn)
-                            flame/ascii-code-escape (stop-fn)
+                            char/code-point-return (save-fn)
+                            char/code-point-escape (stop-fn)
                             nil))})])))
 
 (defn task-list-row []
@@ -88,7 +91,7 @@
                                    :href  (str "/#/" (name filter-kw))} txt])]
     [:footer#footer
      [:span#todo-count
-      [:strong num-active] (flame/pluralize-with num-active " item") " left"]
+      [:strong num-active] (ts/pluralize-with num-active " item") " left"]
      [:ul#filters
       [:li (anchor-generator-fn :all "All")]
       [:li (anchor-generator-fn :active "Active")]

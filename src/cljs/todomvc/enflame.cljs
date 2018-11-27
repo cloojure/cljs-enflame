@@ -7,6 +7,7 @@
     [re-frame.loggers :as rflog]
     [re-frame.router :as rfr]
     [tupelo.core :as t]
+    [tupelo.char :as char]
   ))
 
 ; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
@@ -51,26 +52,7 @@
 ; #TODO CHANGE ALL HANDLERS to be (defn some-handler [ctx event]   (with-map-vals event [id new-filter-kw] ...)
 ;---------------------------------------------------------------------------------------------------
 
-(defn pluralize-with
-  [n base-str]
-  (if (= n 1)
-    base-str
-    (t/glue base-str \s)))
-
-(defn swap-out!     ; #todo => tupelo/core.cljc
-  "Just like clojure.core/swap!, but returns the old value"
-  [tgt-atom swap-fn & args]
-  (let [[old -new-] (apply swap-vals! tgt-atom swap-fn args)]
-    old))
-
-(defn ->sorted-map  ; #todo -> tupelo/core.cljc
-  "Coerces a map into a sorted-map"
-  [map-in]
-  (into (sorted-map) map-in))
-
 ;---------------------------------------------------------------------------------------------------
-(def ascii-code-return 13) ; #todo => tupelo.ascii
-(def ascii-code-escape 27)
 (defn event-val [event]  (-> event .-target .-value))
 
 (defn from-topic [topic] @(rf/subscribe topic)) ; #todo was (listen ...)
@@ -146,7 +128,8 @@
      :enter identity
      :leave (fn [ctx] ; #todo (with-result ctx ...)
               (let [ajax (:ajax ctx)]
-                ;(println :ajax-intc :start ajax)
+                (t/spyx :ajax-intc-start ctx )
+                (t/spyx :ajax-intc-start ajax)
                 (when-not (nil? ajax)
                   (let [method        (t/grab :method ajax)
                         uri           (t/grab :uri ajax)
@@ -158,7 +141,7 @@
                                         (filter (fn [[k v]]
                                                   (t/not-nil? v))
                                           opts-map-nils))]
-                    ;(println :ajax-intc :ready method uri opts-map)
+                    (println :ajax-intc :ready method uri opts-map)
                     (condp = method
                       :get (ajax/GET uri opts-map)
                       :put (ajax/PUT uri opts-map)
