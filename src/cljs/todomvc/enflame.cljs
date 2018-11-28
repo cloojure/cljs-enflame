@@ -108,11 +108,11 @@
      :enter (fn [ctx]
               ;(js/console.info :app-state-intc-enter :begin (ctx-trim ctx))
               (let [ctx-out (-> ctx
-                              (into {:data/type :enflame/context
-                                     :app-state @rfdb/app-db
-                                     ; KLUDGE: Move `:event` from :coeffects sub-map to parent `context` map.
-                                     ; KLUDGE:   Allows us to use unmodified re-frame as "hosting" lib
-                                     :event     (t/fetch-in ctx [:coeffects :event])})
+                              (t/glue {:data/type :enflame/context
+                                       :app-state @rfdb/app-db
+                                       ; KLUDGE: Move `:event` from :coeffects sub-map to parent `context` map.
+                                       ; KLUDGE:   Allows us to use unmodified re-frame as "hosting" lib
+                                       :event     (t/fetch-in ctx [:coeffects :event])})
                               (dissoc :coeffects))]
                 ;(js/console.info :app-state-intc-enter :end (ctx-trim ctx-out))
                 ctx-out))
@@ -154,20 +154,21 @@
 ; #todo need macro  (definterceptor todos-done {:name ...   :enter ...   :leave ...} )
 
 (defn event-handler-for!
-  [event-id interceptor-chain handler-fn]
-  (when-not (keyword? event-id) (throw (ex-info "illegal event-id" event-id)))
-  (when-not (vector? interceptor-chain) (throw (ex-info "illegal interceptor-chain" interceptor-chain)))
-  (when-not (every? map? interceptor-chain) (throw (ex-info "illegal interceptor" interceptor-chain))) ; #todo detail intc map
-  (when-not (fn? handler-fn) (throw (ex-info "illegal handler-fn" handler-fn)))
-  (let [handler-intc (interceptor
-                       {:id    event-id
-                        :enter (fn [ctx]
-                                 (let [event   (t/grab :event ctx)
-                                       ctx-out (handler-fn ctx event)]
-                                   ctx-out))
-                        :leave identity})]
-    (rfe/register event-id
-      [app-state-intc event-dispatch-intc interceptor-chain handler-intc])))
+  [ctx]
+  (t/with-map-vals ctx [event-id interceptor-chain handler-fn]
+    (when-not (keyword? event-id) (throw (ex-info "illegal event-id" event-id)))
+    (when-not (vector? interceptor-chain) (throw (ex-info "illegal interceptor-chain" interceptor-chain)))
+    (when-not (every? map? interceptor-chain) (throw (ex-info "illegal interceptor" interceptor-chain))) ; #todo detail intc map
+    (when-not (fn? handler-fn) (throw (ex-info "illegal handler-fn" handler-fn)))
+    (let [handler-intc (interceptor
+                         {:id    event-id
+                          :enter (fn [ctx]
+                                   (let [event   (t/grab :event ctx)
+                                         ctx-out (handler-fn ctx event)]
+                                     ctx-out))
+                          :leave identity})]
+      (rfe/register event-id
+        [app-state-intc event-dispatch-intc interceptor-chain handler-intc]))))
 
 ; #todo need plumatic schema:  event => [:kw-evt-name & args]
 (defn dispatch-event [& args] (apply rf/dispatch args) )

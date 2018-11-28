@@ -43,7 +43,7 @@
             new-id   (if (not-empty todo-ids)
                        (inc (apply max todo-ids))
                        0)]
-        (into todos {new-id {:id new-id :title todo-title :completed false}})))))
+        (t/glue todos {new-id {:id new-id :title todo-title :completed false}})))))
 
 (defn toggle-completed [ctx [-e- todo-id]]
   (update-in ctx [:app-state :todos todo-id :completed] not))
@@ -56,67 +56,94 @@
 
 (defn clear-completed-todos
   [ctx -event-]
-  (let [todos     (get-in ctx [:app-state :todos])
-        completed-ids  (->> (vals todos) ; find id's for todos where (:completed -> true)
-                    (filter :completed)
-                    (map :id))
-        todos-new (reduce dissoc todos completed-ids) ; delete todos which are completed
-        result    (assoc-in ctx [:app-state :todos] todos-new)]
+  (let [todos         (get-in ctx [:app-state :todos])
+        completed-ids (->> (vals todos) ; find id's for todos where (:completed -> true)
+                        (filter :completed)
+                        (map :id))
+        todos-new     (reduce dissoc todos completed-ids) ; delete todos which are completed
+        result        (assoc-in ctx [:app-state :todos] todos-new)]
     result))
 
 (defn toggle-completed-all
   "Toggles the completed status for each todo"
   [ctx -event-]
-  (let [todos     (get-in ctx [:app-state :todos])
-        new-completed  (not-every? :completed (vals todos)) ; work out: toggle true or false?
-        todos-new (reduce #(assoc-in %1 [%2 :completed] new-completed)
-                    todos
-                    (keys todos))
-        result    (assoc-in ctx [:app-state :todos] todos-new)]
+  (let [todos         (get-in ctx [:app-state :todos])
+        new-completed (not-every? :completed (vals todos)) ; work out: toggle true or false?
+        todos-new     (reduce #(assoc-in %1 [%2 :completed] new-completed)
+                        todos
+                        (keys todos))
+        result        (assoc-in ctx [:app-state :todos] todos-new)]
     result))
 
 (defn register-handlers! []
-  (flame/event-handler-for! :initialize-state   ; usage: (flame/dispatch-event [:initialise-state])
-    [app-state/localstore-load-intc app-state/check-spec-intc]
-    initialise-app-state)
+  (flame/event-handler-for!
+    {:event-id          :initialize-state ; usage: (flame/dispatch-event [:initialise-state])
+     :interceptor-chain [app-state/localstore-load-intc app-state/check-spec-intc]
+     :handler-fn        initialise-app-state})
 
-  (flame/event-handler-for! :set-display-mode ; receives events from URL changes via History/secretary
-    [app-state/check-spec-intc]
-    set-display-mode)
+  (flame/event-handler-for!
+    {:event-id          :set-display-mode ; receives events from URL changes via History/secretary
+     :interceptor-chain [app-state/check-spec-intc]
+     :handler-fn        set-display-mode})
 
-  (flame/event-handler-for! :add-todo
-    common-interceptors
-    add-todo)
+  (flame/event-handler-for!
+    {:event-id          :add-todo
+     :interceptor-chain common-interceptors
+     :handler-fn        add-todo})
 
-  (flame/event-handler-for! :toggle-completed
-    common-interceptors
-    toggle-completed)
+  (flame/event-handler-for!
+    {:event-id          :toggle-completed
+     :interceptor-chain common-interceptors
+     :handler-fn        toggle-completed})
 
-  (flame/event-handler-for! :update-title
-    common-interceptors
-    update-title)
+  (flame/event-handler-for!
+    {:event-id          :update-title
+     :interceptor-chain common-interceptors
+     :handler-fn        update-title})
 
-  (flame/event-handler-for! :delete-todo
-    common-interceptors
-    delete-todo)
+  (flame/event-handler-for!
+    {:event-id          :delete-todo
+     :interceptor-chain common-interceptors
+     :handler-fn        delete-todo})
 
-  (flame/event-handler-for! :clear-completed
-    common-interceptors
-    clear-completed-todos)
+  (flame/event-handler-for!
+    {:event-id          :clear-completed
+     :interceptor-chain common-interceptors
+     :handler-fn        clear-completed-todos})
 
-  (flame/event-handler-for! :complete-all-toggle
-    common-interceptors
-    toggle-completed-all)
+  (flame/event-handler-for!
+    {:event-id          :complete-all-toggle
+     :interceptor-chain common-interceptors
+     :handler-fn        toggle-completed-all})
 
-  (flame/event-handler-for! :ajax-demo
-    common-interceptors
-    (fn [ctx [-e- method uri opts]]
-      (assoc ctx :ajax (into {:method method :uri uri} opts))))
+  (flame/event-handler-for!
+    {:event-id          :ajax-demo
+     :interceptor-chain common-interceptors
+     :handler-fn        (fn [ctx [-e- method uri opts]]
+                          (assoc ctx :ajax (t/glue {:method method :uri uri} opts)))})
 
-  (flame/event-handler-for! :ajax-response
-    common-interceptors
-    (fn [ctx [-e- response]]
-      (assoc-in ctx [:app-state :ajax-response] response)))
+  (flame/event-handler-for!
+    {:event-id          :ajax-response
+     :interceptor-chain common-interceptors
+     :handler-fn        (fn [ctx [-e- response]]
+                          (assoc-in ctx [:app-state :ajax-response] response))})
+
+)
 
 
-  )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
