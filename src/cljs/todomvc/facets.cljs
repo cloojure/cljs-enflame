@@ -1,4 +1,4 @@
-(ns todomvc.topics
+(ns todomvc.facets
   (:require
     [todomvc.enflame :as flame] ))
 
@@ -7,23 +7,23 @@
 
 ; #todo these should all return a map
 
-(defn register-topics! []
-  (flame/define-fragment! :display-mode
+(defn register-facets! []
+  (flame/define-facet! :display-mode
     [:app-state]
     (fn [app-state -query-]
       (:display-mode app-state)))
 
-  (flame/define-fragment! :sorted-todos
+  (flame/define-facet! :sorted-todos
     [:app-state]
     (fn [app-state -query-]
       (:todos app-state)))
 
-  (flame/define-fragment! :todos
+  (flame/define-facet! :todos
     [:sorted-todos]
     (fn [sorted-todos -query-]
       (vals sorted-todos)))
 
-  (flame/define-fragment! :visible-todos
+  (flame/define-facet! :visible-todos
     [:todos :display-mode]
     (fn [[todos showing] -query-]
       (let [filter-fn (condp = showing
@@ -32,22 +32,22 @@
                         :all identity)]
         (filter filter-fn todos))))
 
-  (flame/define-fragment! :all-complete?
+  (flame/define-facet! :all-complete?
     [:todos]
     (fn [todos -query-]
       (every? :completed todos)))
 
-  (flame/define-fragment! :completed-count
+  (flame/define-facet! :completed-count
     [:todos]
     (fn [todos -query-]
       (count (filter :completed todos))))
 
-  (flame/define-fragment! :footer-counts
+  (flame/define-facet! :footer-counts
     [:todos :completed-count]
     (fn [[todos completed] -query-]
       [(- (count todos) completed) completed]))
 
-  (flame/define-fragment! :ajax-response
+  (flame/define-facet! :ajax-response
     [:app-state]
     (fn [app-state -query-]
       (:ajax-response app-state)))

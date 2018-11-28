@@ -56,7 +56,7 @@
 ;---------------------------------------------------------------------------------------------------
 (defn event-val [event]  (-> event .-target .-value))
 
-(defn fragment-value [fragment-id] @(rf/subscribe fragment-id)) ; #todo was (listen ...)
+(defn facet-value [facet-id] @(rf/subscribe facet-id)) ; #todo was (listen ...)
 
 ;---------------------------------------------------------------------------------------------------
 (defonce ctx-trim-queue-stack (atom true))
@@ -175,22 +175,22 @@
 (defn dispatch-event-sync [& args] (apply rf/dispatch-sync args) )
 
 ;****************************************************************
-; Define built-in :app-state fragment
+; Define built-in :app-state facet
 (rf/reg-sub :app-state (fn [app-state -query-] app-state)) ; loaded from rfdb/app-db ratom
 ;****************************************************************
 
-; #todo macro to insert fragment as fn-name;  :sorted-todos => (fn sorted-todos-fn ...)
-; #todo (flame/define-fragment! :sorted-todos ...) => (fn sorted-todos-fn ...)
-(defn define-fragment!
-  [fragment-id input-fragments tx-fn]
-  (when-not (keyword? fragment-id) (throw (ex-info "fragment-id must be a keyword" fragment-id)))
-  (when-not (vector? input-fragments) (throw (ex-info "input-fragments must be a vector" input-fragments)))
-  (when-not (every? keyword? input-fragments) (throw (ex-info "fragment values must be keywords" input-fragments)))
+; #todo macro to insert facet as fn-name;  :sorted-todos => (fn sorted-todos-fn ...)
+; #todo (flame/define-facet! :sorted-todos ...) => (fn sorted-todos-fn ...)
+(defn define-facet!
+  [facet-id input-facets tx-fn]
+  (when-not (keyword? facet-id) (throw (ex-info "facet-id must be a keyword" facet-id)))
+  (when-not (vector? input-facets) (throw (ex-info "input-facets must be a vector" input-facets)))
+  (when-not (every? keyword? input-facets) (throw (ex-info "facet values must be keywords" input-facets)))
   (when-not (fn? tx-fn) (throw (ex-info "tx-fn must be a function" tx-fn)))
   (let [sugar-forms (vec (apply concat
-                           (for [input-fragment input-fragments]
-                             [:<- [input-fragment]])))
-        args-vec    (vec (concat [fragment-id] sugar-forms [tx-fn]))]
+                           (for [input-facet input-facets]
+                             [:<- [input-facet]])))
+        args-vec    (vec (concat [facet-id] sugar-forms [tx-fn]))]
     (apply rf/reg-sub args-vec)))
 
 ; #todo need macro  (with-path state [:app-state :todos] ...) ; extract and replace in ctx

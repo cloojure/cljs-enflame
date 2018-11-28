@@ -8,8 +8,8 @@
     [todomvc.components :as gui]
     [todomvc.enflame :as flame]
     [todomvc.events :as events] ; These two are only required to make the compiler
-    [todomvc.topics :as topics] ; load them (see docs/Basic-App-Structure.md)
-    )
+    [todomvc.facets :as facets] ; load them (see docs/Basic-App-Structure.md)
+  )
   (:require-macros [secretary.core :as secretary])
   (:import [goog History]
            [goog.history EventType]))
@@ -63,7 +63,7 @@ Go ahead and edit it and see reloading in action. Again, or not.")
   []
   (configure-routes!)
   (events/register-handlers!)
-  (topics/register-topics!)
+  (facets/register-facets!)
   ; Put an initial value into :app-state. The event handler for `:initialize-state` can be found in `events.cljs`
   ; Using the sync version of dispatch means that value is in place before we go onto the next step.
   (flame/dispatch-event-sync [:initialize-state])
