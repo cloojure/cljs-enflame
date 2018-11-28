@@ -76,14 +76,15 @@
 
   NOTE: enflame uses Pedestal-style `:enter` & `:leave` keys for the interceptor map.
   "
-  [map-in]         ; #todo :- tsk/KeyMap
-  {:id     (t/grab :id map-in)
-   :before (t/grab :enter map-in)
-   :after  (t/grab :leave map-in)})
+  [ctx]         ; #todo :- tsk/KeyMap
+  {:id     (t/grab :id ctx)
+   :before (t/grab :enter ctx)
+   :after  (t/grab :leave ctx)})
 ; #todo allow one of :enter or :leave to be blank => identity
 ; #todo add :error key like pedestal?
 
 (def event-dispatch-intc
+  "Interceptor for managing event dispatch"
   (interceptor      ; #todo need test
     {:id    :dispatch-all-intc
      :enter identity
@@ -103,6 +104,7 @@
               ctx)}))
 
 (def app-state-intc
+  "Interceptor for managing app state"
   (interceptor
     {:id    :app-state-intc
      :enter (fn [ctx]
@@ -124,11 +126,12 @@
                   (reset! rfdb/app-db app-state))))}))
 
 (def ajax-options-keys
-  "Options map keys accepted by cljs-ajax"
+  "Set of map keys accepted as options by cljs-ajax"
   #{:body :cookie-policy :error-handler :finally :format :handler :headers :params
     :progress-handler :response-format :timeout :url-params :with-credentials})
 
 (def ajax-intc
+  "Interceptor for performing AJAX requests"
   (interceptor
     {:id    :ajax-intc
      :enter identity
@@ -154,6 +157,7 @@
 ; #todo need macro  (definterceptor todos-done {:name ...   :enter ...   :leave ...} )
 
 (defn event-handler-for!
+  "Defines the event handler given a context map with keys [:event-id :interceptor-chain :handler-fn]"
   [ctx]
   (t/with-map-vals ctx [event-id interceptor-chain handler-fn]
     (when-not (keyword? event-id) (throw (ex-info "illegal event-id" event-id)))
@@ -183,6 +187,7 @@
 ; #todo macro to insert facet as fn-name;  :sorted-todos => (fn sorted-todos-fn ...)
 ; #todo (flame/define-facet! :sorted-todos ...) => (fn sorted-todos-fn ...)
 (defn define-facet!
+  "Defines a facet of global state given a context map with keys [:facet-id :input-facets :tx-fn]"
   [ctx]
   (t/with-map-vals ctx [facet-id input-facets tx-fn]
     (when-not (keyword? facet-id) (throw (ex-info "facet-id must be a keyword" facet-id)))
@@ -208,8 +213,7 @@
   Output includes:
   1. the event vector
   2. orig app-state
-  3. new app-state
-  "
+  3. new app-state          "
   (interceptor
     {:id    :trace
      :enter (fn trace-enter ; #todo => (with-result context ...)
@@ -229,13 +233,12 @@
               ctx)}))
 
 (def trace-print
-  "An interceptor which logs/instruments an event handler's actions to
-  `js/console.log`. See examples/todomvc/src/events.cljs for use.
+  "An interceptor which logs/instruments an event handler's actions using `println`.
+  See examples/todomvc/src/events.cljs for use.
   Output includes:
   1. the event vector
   2. orig app-state
-  3. new app-state
-  "
+  3. new app-state     "
   (interceptor
     {:id    :trace-print
 
