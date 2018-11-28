@@ -40,7 +40,7 @@
     (fn [todos]     ; #todo kill this part
       ; must choose a new id greater than any existing id (possibly from localstore todos)
       (let [todo-ids (keys todos)
-            new-id   (if (not-empty todo-ids)
+            new-id   (if (t/not-empty? todo-ids)
                        (inc (apply max todo-ids))
                        0)]
         (t/glue todos {new-id {:id new-id :title todo-title :completed false}})))))
@@ -56,10 +56,10 @@
 
 (defn clear-completed-todos
   [ctx -event-]
-  (let [todos         (get-in ctx [:app-state :todos])
+  (let [todos         (t/fetch-in ctx [:app-state :todos])
         completed-ids (->> (vals todos) ; find id's for todos where (:completed -> true)
                         (filter :completed)
-                        (map :id))
+                        (mapv :id))
         todos-new     (reduce dissoc todos completed-ids) ; delete todos which are completed
         result        (assoc-in ctx [:app-state :todos] todos-new)]
     result))
@@ -67,7 +67,7 @@
 (defn toggle-completed-all
   "Toggles the completed status for each todo"
   [ctx -event-]
-  (let [todos         (get-in ctx [:app-state :todos])
+  (let [todos         (t/fetch-in ctx [:app-state :todos])
         new-completed (not-every? :completed (vals todos)) ; work out: toggle true or false?
         todos-new     (reduce #(assoc-in %1 [%2 :completed] new-completed)
                         todos
