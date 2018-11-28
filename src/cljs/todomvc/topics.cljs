@@ -8,22 +8,22 @@
 ; #todo these should all return a map
 
 (defn register-topics! []
-  (flame/define-topic! :display-mode
+  (flame/define-fragment! :display-mode
     [:app-state]
     (fn [app-state -query-]
       (:display-mode app-state)))
 
-  (flame/define-topic! :sorted-todos
+  (flame/define-fragment! :sorted-todos
     [:app-state]
     (fn [app-state -query-]
       (:todos app-state)))
 
-  (flame/define-topic! :todos
+  (flame/define-fragment! :todos
     [:sorted-todos]
     (fn [sorted-todos -query-]
       (vals sorted-todos)))
 
-  (flame/define-topic! :visible-todos
+  (flame/define-fragment! :visible-todos
     [:todos :display-mode]
     (fn [[todos showing] -query-]
       (let [filter-fn (condp = showing
@@ -32,22 +32,22 @@
                         :all identity)]
         (filter filter-fn todos))))
 
-  (flame/define-topic! :all-complete?
+  (flame/define-fragment! :all-complete?
     [:todos]
     (fn [todos -query-]
       (every? :completed todos)))
 
-  (flame/define-topic! :completed-count
+  (flame/define-fragment! :completed-count
     [:todos]
     (fn [todos -query-]
       (count (filter :completed todos))))
 
-  (flame/define-topic! :footer-counts
+  (flame/define-fragment! :footer-counts
     [:todos :completed-count]
     (fn [[todos completed] -query-]
       [(- (count todos) completed) completed]))
 
-  (flame/define-topic! :ajax-response
+  (flame/define-fragment! :ajax-response
     [:app-state]
     (fn [app-state -query-]
       (:ajax-response app-state)))

@@ -65,8 +65,8 @@
            :on-stop #(reset! editing false)}])])))
 
 (defn task-list []
-  (let [visible-todos (flame/from-topic [:visible-todos :a :b])
-        all-complete? (flame/from-topic [:all-complete?])]
+  (let [visible-todos (flame/fragment-value [:visible-todos :a :b])
+        all-complete? (flame/fragment-value [:all-complete?])]
     [:section#main
      [:input#toggle-all
       {:type      "checkbox"
@@ -82,8 +82,8 @@
 ; These buttons are actually hrefs (hyperliks) that will cause broswser navigation observed by History
 ; and propogated via secretary.
 (defn footer-controls []
-  (let [[num-active num-completed] (flame/from-topic [:footer-counts 1 2])
-        display-mode               (flame/from-topic [:display-mode])
+  (let [[num-active num-completed] (flame/fragment-value [:footer-counts 1 2])
+        display-mode               (flame/fragment-value [:display-mode])
 
         ; #todo #bug doesn't visually switch from initial :all when click :active
         anchor-generator-fn (fn [filter-kw txt]
@@ -114,7 +114,7 @@
   [:div
    [:section#todoapp
     [task-entry]
-    (when (t/not-empty? (flame/from-topic [:todos]))
+    (when (t/not-empty? (flame/fragment-value [:todos]))
       [task-list])
     [footer-controls]]
    [:footer#info
@@ -125,7 +125,7 @@
 (defn ajax-says []
   [:div
    [:span {:style {:color :darkgreen}} [:strong "AJAX says: "]]
-   [:span {:style {:font-style :italic}} nbsp nbsp (flame/from-topic [:ajax-response])]])
+   [:span {:style {:font-style :italic}} nbsp nbsp (flame/fragment-value [:ajax-response])]])
 
 (defn root []       ; was simple-component
   [:div
