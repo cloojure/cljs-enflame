@@ -2,7 +2,7 @@
   :min-lein-version "2.7.1"
   :dependencies [[binaryage/devtools "0.9.4"]
                  [binaryage/oops "0.6.2"]
-                 [cljs-ajax "0.7.5"]
+                 [cljs-ajax "0.8.0"]
                  [org.clojure/clojure "1.9.0"]
                  [org.clojure/clojurescript "1.10.339"]
                  [re-frame "0.10.6"]

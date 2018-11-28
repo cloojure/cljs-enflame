@@ -1,6 +1,7 @@
 (ns todomvc.enflame ; #todo => re-state ???
   (:require
     [ajax.core :as ajax]
+    [clojure.set :as set]
     [re-frame.core :as rf]
     [re-frame.db :as rfdb]
     [re-frame.events :as rfe]
@@ -122,26 +123,25 @@
                   (println :app-state-intc-leave "resetting rfdb/app-db atom...")
                   (reset! rfdb/app-db app-state))))}))
 
+(def ajax-options-keys
+  "Options map keys accepted by cljs-ajax"
+  #{:body :cookie-policy :error-handler :finally :format :handler :headers :params
+    :progress-handler :response-format :timeout :url-params :with-credentials})
+
 (def ajax-intc
   (interceptor
     {:id    :ajax-intc
      :enter identity
      :leave (fn [ctx] ; #todo (with-result ctx ...)
               (let [ajax (:ajax ctx)]
-               ;(t/spyx :ajax-intc-start ctx )
-               ;(t/spyx :ajax-intc-start ajax)
+                (t/spyx :ajax-intc-start ctx)
+                (t/spyx :ajax-intc-start ajax)
                 (when-not (nil? ajax)
-                  (let [method        (t/grab :method ajax)
-                        uri           (t/grab :uri ajax)
-                        opts-map-nils (select-keys ajax ; #todo why look for all the (nonexistent) keys???
-                                        [:handler :error-handler :handler :progress-handler :error-handler :finally
-                                         :format :response-format :params :url-params :timeout :headers :cookie-policy
-                                         :with-credentials :body])
-                        opts-map      (into {}
-                                        (filter (fn [[k v]]
-                                                  (t/not-nil? v))
-                                          opts-map-nils))]
-                   ;(println :ajax-intc :ready method uri opts-map)
+                  (let [method            (t/grab :method ajax)
+                        uri               (t/grab :uri ajax)
+                        ajax-opts-present (set/intersection (set (keys ajax)) ajax-options-keys)
+                        opts-map          (t/submap-by-keys ajax ajax-opts-present)]
+                    (t/spy :ajax-intc-ready (t/vals->map method uri opts-map))
                     (condp = method
                       :get (ajax/GET uri opts-map)
                       :put (ajax/PUT uri opts-map)
