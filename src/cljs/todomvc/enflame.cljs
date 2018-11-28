@@ -134,14 +134,14 @@
      :enter identity
      :leave (fn [ctx] ; #todo (with-result ctx ...)
               (let [ajax (:ajax ctx)]
-                (t/spyx :ajax-intc-start ctx)
-                (t/spyx :ajax-intc-start ajax)
+               ;(t/spyx :ajax-intc-start ctx)
+               ;(t/spyx :ajax-intc-start ajax)
                 (when-not (nil? ajax)
                   (let [method            (t/grab :method ajax)
                         uri               (t/grab :uri ajax)
                         ajax-opts-present (set/intersection (set (keys ajax)) ajax-options-keys)
                         opts-map          (t/submap-by-keys ajax ajax-opts-present)]
-                    (t/spy :ajax-intc-ready (t/vals->map method uri opts-map))
+                   ;(t/spy :ajax-intc-ready (t/vals->map method uri opts-map))
                     (condp = method
                       :get (ajax/GET uri opts-map)
                       :put (ajax/PUT uri opts-map)
@@ -182,16 +182,17 @@
 ; #todo macro to insert facet as fn-name;  :sorted-todos => (fn sorted-todos-fn ...)
 ; #todo (flame/define-facet! :sorted-todos ...) => (fn sorted-todos-fn ...)
 (defn define-facet!
-  [facet-id input-facets tx-fn]
-  (when-not (keyword? facet-id) (throw (ex-info "facet-id must be a keyword" facet-id)))
-  (when-not (vector? input-facets) (throw (ex-info "input-facets must be a vector" input-facets)))
-  (when-not (every? keyword? input-facets) (throw (ex-info "facet values must be keywords" input-facets)))
-  (when-not (fn? tx-fn) (throw (ex-info "tx-fn must be a function" tx-fn)))
-  (let [sugar-forms (vec (apply concat
-                           (for [input-facet input-facets]
-                             [:<- [input-facet]])))
-        args-vec    (vec (concat [facet-id] sugar-forms [tx-fn]))]
-    (apply rf/reg-sub args-vec)))
+  [ctx]
+  (t/with-map-vals ctx [facet-id input-facets tx-fn]
+    (when-not (keyword? facet-id) (throw (ex-info "facet-id must be a keyword" facet-id)))
+    (when-not (vector? input-facets) (throw (ex-info "input-facets must be a vector" input-facets)))
+    (when-not (every? keyword? input-facets) (throw (ex-info "facet values must be keywords" input-facets)))
+    (when-not (fn? tx-fn) (throw (ex-info "tx-fn must be a function" tx-fn)))
+    (let [sugar-forms (vec (apply concat
+                             (for [input-facet input-facets]
+                               [:<- [input-facet]])))
+          args-vec    (vec (concat [facet-id] sugar-forms [tx-fn]))]
+      (apply rf/reg-sub args-vec))))
 
 ; #todo need macro  (with-path state [:app-state :todos] ...) ; extract and replace in ctx
 
