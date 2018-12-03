@@ -32,7 +32,7 @@
           :value       @text-val
           :auto-focus  true
           :on-blur     save-fn
-          :on-change   #(reset! text-val (flame/event-val %))
+          :on-change   #(reset! text-val (flame/event-value %))
           :on-key-down #(let [rcvd (.-which %)] ; KeyboardEvent property
                           (condp = rcvd
                             char/code-point-return (save-fn)

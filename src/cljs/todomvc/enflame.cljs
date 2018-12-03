@@ -54,7 +54,7 @@
 ;---------------------------------------------------------------------------------------------------
 
 ;---------------------------------------------------------------------------------------------------
-(defn event-val [event]  (-> event .-target .-value))
+(defn event-value [event]  (-> event .-target .-value))
 
 (defn facet-value [facet-id] @(rf/subscribe facet-id)) ; #todo was (listen ...)
 
@@ -156,7 +156,7 @@
 ;---------------------------------------------------------------------------------------------------
 ; #todo need macro  (definterceptor todos-done {:name ...   :enter ...   :leave ...} )
 
-(defn event-handler-for!
+(defn register-event
   "Defines the event handler given a context map with keys [:event-id :interceptor-chain :handler-fn]"
   [ctx]
   (t/with-map-vals ctx [event-id interceptor-chain handler-fn]
@@ -186,7 +186,7 @@
 
 ; #todo macro to insert facet as fn-name;  :sorted-todos => (fn sorted-todos-fn ...)
 ; #todo (flame/define-facet! :sorted-todos ...) => (fn sorted-todos-fn ...)
-(defn define-facet!
+(defn define-facet
   "Defines a facet of global state given a context map with keys [:facet-id :input-facets :tx-fn]"
   [ctx]
   (t/with-map-vals ctx [facet-id input-facets tx-fn]

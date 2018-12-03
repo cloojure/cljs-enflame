@@ -76,53 +76,53 @@
     result))
 
 (defn register-handlers! []
-  (flame/event-handler-for!
+  (flame/register-event
     {:event-id          :initialize-state ; usage: (flame/dispatch-event [:initialise-state])
      :interceptor-chain [app-state/localstore-load-intc app-state/check-spec-intc]
      :handler-fn        initialise-app-state})
 
-  (flame/event-handler-for!
+  (flame/register-event
     {:event-id          :set-display-mode ; receives events from URL changes via History/secretary
      :interceptor-chain [app-state/check-spec-intc]
      :handler-fn        set-display-mode})
 
-  (flame/event-handler-for!
+  (flame/register-event
     {:event-id          :add-todo
      :interceptor-chain common-interceptors
      :handler-fn        add-todo})
 
-  (flame/event-handler-for!
+  (flame/register-event
     {:event-id          :toggle-completed
      :interceptor-chain common-interceptors
      :handler-fn        toggle-completed})
 
-  (flame/event-handler-for!
+  (flame/register-event
     {:event-id          :update-title
      :interceptor-chain common-interceptors
      :handler-fn        update-title})
 
-  (flame/event-handler-for!
+  (flame/register-event
     {:event-id          :delete-todo
      :interceptor-chain common-interceptors
      :handler-fn        delete-todo})
 
-  (flame/event-handler-for!
+  (flame/register-event
     {:event-id          :clear-completed
      :interceptor-chain common-interceptors
      :handler-fn        clear-completed-todos})
 
-  (flame/event-handler-for!
+  (flame/register-event
     {:event-id          :complete-all-toggle
      :interceptor-chain common-interceptors
      :handler-fn        toggle-completed-all})
 
-  (flame/event-handler-for!
+  (flame/register-event
     {:event-id          :ajax-demo
      :interceptor-chain common-interceptors
      :handler-fn        (fn [ctx [-e- method uri opts]]
                           (assoc ctx :ajax (t/glue {:method method :uri uri} opts)))})
 
-  (flame/event-handler-for!
+  (flame/register-event
     {:event-id          :ajax-response
      :interceptor-chain common-interceptors
      :handler-fn        (fn [ctx [-e- response]]
