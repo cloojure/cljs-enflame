@@ -174,6 +174,9 @@
       (rfe/register event-id
         [app-state-intc event-dispatch-intc interceptor-chain handler-intc]))))
 
+; #todo need unregister-event
+; #todo throw if receive non-registered event (flag to disable this?)
+
 ; #todo need plumatic schema:  event => [:kw-evt-name & args]
 (defn dispatch-event [& args] (apply rf/dispatch args) )
 
