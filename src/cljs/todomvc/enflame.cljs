@@ -156,7 +156,7 @@
 ;---------------------------------------------------------------------------------------------------
 ; #todo need macro  (definterceptor todos-done {:name ...   :enter ...   :leave ...} )
 
-(defn register-event
+(defn define-event
   "Defines the event handler given a context map with keys [:event-id :interceptor-chain :handler-fn]"
   [ctx]
   (t/with-map-vals ctx [event-id interceptor-chain handler-fn]
@@ -190,6 +190,8 @@
 ; #todo macro to insert facet as fn-name;  :sorted-todos => (fn sorted-todos-fn ...)
 ; #todo (flame/define-facet! :sorted-todos ...) => (fn sorted-todos-fn ...)
 (defn define-facet
+  ; #todo facet view vista vision scene snippet projection chunk flake shard splinter
+  ; #todo slice fragment shatter sliver factor element flare beam ray glint ember glow
   "Defines a facet of global state given a context map with keys [:facet-id :input-facets :tx-fn]"
   [ctx]
   (t/with-map-vals ctx [facet-id input-facets tx-fn]
