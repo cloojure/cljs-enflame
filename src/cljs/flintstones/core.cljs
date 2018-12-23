@@ -1,5 +1,12 @@
 (ns flintstones.core
   (:require
+    [cljsjs.react-bootstrap]
+    ;[cljs-react-bootstrap.handlers]
+    ;[cljs-react-bootstrap.subs]
+    ;[cljs-react-bootstrap.views :as views]
+    ;[cljs-react-bootstrap.config :as config]
+    ;[cljs-react-bootstrap.layout :as layout]
+
     [devtools.core :as devtools]
     [goog.events]
     [flintstones.slate :as slate]

@@ -1,6 +1,11 @@
 (ns todomvc.components
   "These functions are all Reagent components"
   (:require
+    [todomvc.react-bootstrap-core :as rbs]
+    ;[cljs-react-bootstrap.react-bootstrap.dropdown :as rbs-dropdown]
+    ;[cljs-react-bootstrap.react-bootstrap.modal :as rbs-modal]
+    ;[cljs-react-bootstrap.react-bootstrap.navbar :as rbs-navbar]
+
     [goog.string :as gstring]
     [clojure.string :as str]
     [oops.core :as oops]
@@ -88,17 +93,24 @@
      [:span#todo-count
       [:strong num-active]
       (ts/pluralize-with num-active " item") " left  (" display-mode ")"]
-     [:span#filters
-      [:input.mode-button {:type    "button" :value "All" :id :all
-                           :onClick #(flame/dispatch-event [:set-display-mode :all])}]
-      [:input.mode-button {:type    "button" :value "Active" :id :active
-                           :onClick #(flame/dispatch-event [:set-display-mode :active])}]
-      [:input.mode-button {:type    "button" :value "Completed" :id :completed
-                           :onClick #(flame/dispatch-event [:set-display-mode :completed])}]]
-     (when (pos? num-completed)
-       [:button#clear-completed
-        {:on-click #(flame/dispatch-event [:clear-completed])}
-        "Clear Completed"])]))
+     [rbs/button-group
+      ;[rbs/button {:active false :onClick #(println "*****  BUTTON CLICKED!!!  ***** ") } "Hello Bootstrap!"]
+      [rbs/button { :id      :all ; :bs-style "primary"
+                   :active true
+                   :on-click #(flame/dispatch-event [:set-display-mode :all])} "All"]
+      [rbs/button { :id      :active
+                   :on-click #(flame/dispatch-event [:set-display-mode :active])} "Active"]
+      [rbs/button { :id      :completed
+                   :on-click #(flame/dispatch-event [:set-display-mode :completed])} "Completed"]
+      (when (pos? num-completed)
+        [rbs/button {; :id      :completed
+                     :on-click #(flame/dispatch-event [:clear-completed])} "Clear Completed"])
+      ]
+     ;(when (pos? num-completed)
+     ;  [:button#clear-completed
+     ;   {:on-click #(flame/dispatch-event [:clear-completed])}
+     ;   "Clear Completed"])
+     ]))
 
 (defn task-entry []
   [:header#header
