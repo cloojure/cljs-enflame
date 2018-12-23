@@ -4,7 +4,6 @@
     [goog.events]
     [flintstones.slate :as slate]
     [reagent.core :as r]
-   ;[secretary.core :as secretary]
    ;[bidi.bidi :as bidi]
     [todomvc.components :as gui]
     [todomvc.enflame :as flame]
@@ -34,57 +33,6 @@ Go ahead and edit it and see reloading in action. Again, or not.")
 ; -- Debugging aids ----------------------------------------------------------
 (devtools/install!) ; we love https://github.com/binaryage/cljs-devtools
 
-(defn get-token []
-  (t/spyx "get-token=" js/window.location.pathname))
-
-(defn make-history []
-  (doto (Html5History.)
-    (.setPathPrefix (str js/window.location.protocol "//" js/window.location.host))
-    (.setUseFragment false)))
-
-;(defn handle-url-change
-;  [event]
-;  (js/console.log "handle-url-change event=" event)
-;  (js/console.log "handle-url-change navigation=" (.-isNavigation event))
-;  (let [token       (get-token) ; (.-token event)
-;  ]
-;    (js/console.log "handle-url-change token=" token)
-;    (secretary/dispatch! token)))
-
-;(defonce history (doto (make-history)
-;                   (goog.events/listen EventType.NAVIGATE
-;                     #(handle-url-change %)) ; wrap in a fn to allow live reloading
-;                   (.setEnabled true)))
-
-; Set up secretary navigation routing for the event-type filters. Must occur before goog.History setup
-; since that will fire an event.
-;-----------------------------------------------------------------------------
-; Sets browser URI to one of
-;    /#/all
-;    /#/active
-;    /#/completed
-
-;(secretary/set-config! :prefix "#")
-
-;(secretary/defroute "/" []
-;  (flame/dispatch-event [:set-display-mode :all]))
-;
-;(secretary/defroute "/:filter" [filter]
-;  (let [secr-evt-mode (keyword filter)]
-;    (js/console.log :secr-route "filter=" filter)
-;    (js/console.log :secr-evt-mode secr-evt-mode)
-;    (flame/dispatch-event [:set-display-mode secr-evt-mode])))
-
-;-----------------------------------------------------------------------------
-; Here we listen for URL change events and use secretary/dispatch to propagate them to [:set-showing ...]
-; Must happend AFTER setting up secretary since `.setEnabled` will fire an event
-;(defn setup-history
-;  []
-;  (doto (History.)
-;    (goog.events/listen EventType.NAVIGATE
-;      #(handle-url-change %)) ; wrap in a fn to enable live reloading
-;    (.setEnabled true))) ; will fire an event
-
 ; #todo  make an `event` type & factory fn: (event :set-showing :all) instead of bare vec:  [:set-showing :all]
 ; #todo fix secretary (-> bidi?) to avoid dup (:filter x2) and make more like pedestal
 
@@ -95,7 +43,6 @@ Go ahead and edit it and see reloading in action. Again, or not.")
   (println "app-start - enter")
   (events/register-handlers)
   (reactives/initialize)
- ;(setup-history)
 
   ; Put an initial value into :app-state. The event handler for `:initialize-app-state` can be found in `events.cljs`
   ; Using the sync version of dispatch means that value is in place before we go onto the next step.

@@ -88,13 +88,13 @@
      [:span#todo-count
       [:strong num-active]
       (ts/pluralize-with num-active " item") " left  (" display-mode ")"]
-     [:ul#filters
-      [:li [:input.mode-button {:type    "button" :value "All" :id :all
-                                :onClick #(flame/dispatch-event [:set-display-mode :all])}]]
-      [:li [:input.mode-button {:type    "button" :value "Active" :id :active
-                                :onClick #(flame/dispatch-event [:set-display-mode :active])}]]
-      [:li [:input.mode-button {:type    "button" :value "Completed" :id :completed
-                                :onClick #(flame/dispatch-event [:set-display-mode :completed])}]]]
+     [:span#filters
+      [:input.mode-button {:type    "button" :value "All" :id :all
+                           :onClick #(flame/dispatch-event [:set-display-mode :all])}]
+      [:input.mode-button {:type    "button" :value "Active" :id :active
+                           :onClick #(flame/dispatch-event [:set-display-mode :active])}]
+      [:input.mode-button {:type    "button" :value "Completed" :id :completed
+                           :onClick #(flame/dispatch-event [:set-display-mode :completed])}]]
      (when (pos? num-completed)
        [:button#clear-completed
         {:on-click #(flame/dispatch-event [:clear-completed])}

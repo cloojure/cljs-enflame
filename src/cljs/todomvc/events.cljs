@@ -23,7 +23,7 @@
 (defn set-display-mode
   "Saves current 'showing' mode (3 filter buttons at the bottom of the display)"
   [ctx [-e- new-filter-kw]] ; :- #{ :all, :active or :completed }
-  (println "set-display-mode new-filter-kw" new-filter-kw)
+  (t/spyx :set-display-mode new-filter-kw)
   (let [all-filter-modes #{:all :active :completed}
         new-filter-kw    (if (contains? all-filter-modes new-filter-kw)
                            new-filter-kw
@@ -76,7 +76,7 @@
    flame/ajax-intc
    ;flame/trace
    flame/trace-print
-   ])
+  ])
 
 (defn register-handlers []
   (flame/defevent
@@ -132,16 +132,6 @@
                           (assoc-in ctx [:app-state :ajax-response] response))})
 
 )
-
-
-
-
-
-
-
-
-
-
 
 
 
