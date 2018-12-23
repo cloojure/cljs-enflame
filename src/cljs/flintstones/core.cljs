@@ -12,7 +12,7 @@
     [flintstones.slate :as slate]
     [reagent.core :as r]
    ;[bidi.bidi :as bidi]
-    [todomvc.components :as gui]
+    [todomvc.components :as components]
     [todomvc.enflame :as flame]
     [todomvc.events :as events] ; These two are only required to make the compiler
     [todomvc.reactives :as reactives] ; load them (see docs/Basic-App-Structure.md)
@@ -62,7 +62,7 @@ Go ahead and edit it and see reloading in action. Again, or not.")
                                                      :error-handler ajax-error-handler}])
 
 
-  (r/render [gui/root] (js/document.getElementById "tgt-div"))
+  (r/render [components/root] (js/document.getElementById "tgt-div"))
   (println "app-start - leave")
 )
 

@@ -51,12 +51,10 @@
                      completed (str " completed")
                      @editing (str " editing"))}
        [:div.view
-        [:input.toggle
-         {:type      :checkbox
-          :checked   completed
-          :on-change #(flame/dispatch-event [:toggle-completed id])}]
-        [:label
-         {:on-double-click #(reset! editing true)}
+        [:input.toggle {:type      :checkbox
+                        :checked   completed
+                        :on-change #(flame/dispatch-event [:toggle-completed id])}]
+        [:label {:on-double-click #(reset! editing true)}
          title]
         [:button.destroy
          {:on-click #(flame/dispatch-event [:delete-todo id])}]]
@@ -89,28 +87,21 @@
 (defn footer-controls []
   (let [[num-active num-completed] (flame/reactive-value [:footer-counts 1 2])
         display-mode (flame/reactive-value [:display-mode])]
-    [:footer#footer
-     [:span#todo-count
+    [:footer        ; #footer
+     [:span ; #todo-count
       [:strong num-active]
       (ts/pluralize-with num-active " item") " left  (" display-mode ")"]
-     [rbs/button-group
-      ;[rbs/button {:active false :onClick #(println "*****  BUTTON CLICKED!!!  ***** ") } "Hello Bootstrap!"]
-      [rbs/button { :id      :all ; :bs-style "primary"
-                   :active true
-                   :on-click #(flame/dispatch-event [:set-display-mode :all])} "All"]
-      [rbs/button { :id      :active
-                   :on-click #(flame/dispatch-event [:set-display-mode :active])} "Active"]
-      [rbs/button { :id      :completed
-                   :on-click #(flame/dispatch-event [:set-display-mode :completed])} "Completed"]
+     [:span         ; #filters
+      [:button {:type     :button :id :all :class "filters"
+                :on-click #(flame/dispatch-event [:set-display-mode :all])} "All"]
+      [:button.filters {:type     :button :id :active
+                :on-click #(flame/dispatch-event [:set-display-mode :active])} "Active"]
+      [:button.filters {:type     :button :id :completed
+                :on-click #(flame/dispatch-event [:set-display-mode :completed])} "Completed"]
       (when (pos? num-completed)
-        [rbs/button {; :id      :completed
+        [:button.filters {:type :button ; :id      :completed
                      :on-click #(flame/dispatch-event [:clear-completed])} "Clear Completed"])
-      ]
-     ;(when (pos? num-completed)
-     ;  [:button#clear-completed
-     ;   {:on-click #(flame/dispatch-event [:clear-completed])}
-     ;   "Clear Completed"])
-     ]))
+      ]]))
 
 (defn task-entry []
   [:header#header
@@ -140,6 +131,11 @@
 
 (defn root []       ; was simple-component
   [:div
+   [rbs/panel
+    [rbs/label "React-Bootstrap Label!"]
+    [rbs/button {:bs-size  :xsmall
+                 :on-click #(js/alert "Hello from React-Bootstrap!")} "Click me!"]]
+
    [:hr]
    [:div
     [:p "I am a component!"]
