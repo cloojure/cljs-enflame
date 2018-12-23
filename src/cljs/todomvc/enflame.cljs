@@ -8,7 +8,6 @@
     [re-frame.loggers :as rflog]
     [re-frame.router :as rfr]
     [tupelo.core :as t]
-    [tupelo.char :as char]
   ))
 
 ; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
@@ -56,7 +55,7 @@
 ;---------------------------------------------------------------------------------------------------
 (defn event-value [event]  (-> event .-target .-value))
 
-(defn facet-value [facet-id] @(rf/subscribe facet-id)) ; #todo was (listen ...)
+(defn reactive-value [reactive-id] @(rf/subscribe reactive-id)) ; #todo was (listen ...)
 
 ;---------------------------------------------------------------------------------------------------
 (defonce ctx-trim-queue-stack (atom true))
@@ -156,7 +155,7 @@
 ;---------------------------------------------------------------------------------------------------
 ; #todo need macro  (definterceptor todos-done {:name ...   :enter ...   :leave ...} )
 
-(defn define-event
+(defn defevent
   "Defines the event handler given a context map with keys [:event-id :interceptor-chain :handler-fn]"
   [ctx]
   (t/with-map-vals ctx [event-id interceptor-chain handler-fn]
@@ -178,31 +177,34 @@
 ; #todo throw if receive non-registered event (flag to disable this?)
 
 ; #todo need plumatic schema:  event => [:kw-evt-name & args]
-(defn dispatch-event [& args] (apply rf/dispatch args) )
+(defn dispatch-event
+  [& args]
+  (t/spyx :dispatch-event args )
+  (apply rf/dispatch args) )
 
 (defn dispatch-event-sync [& args] (apply rf/dispatch-sync args) )
 
 ;****************************************************************
-; Define built-in :app-state facet
+; Define built-in :app-state reactive
 (rf/reg-sub :app-state (fn [app-state -query-] app-state)) ; loaded from rfdb/app-db ratom
 ;****************************************************************
 
-; #todo macro to insert facet as fn-name;  :sorted-todos => (fn sorted-todos-fn ...)
-; #todo (flame/define-facet! :sorted-todos ...) => (fn sorted-todos-fn ...)
-(defn define-facet
-  ; #todo facet view vista vision scene snippet projection chunk flake shard splinter
+; #todo macro to insert reactive as fn-name;  :sorted-todos => (fn sorted-todos-fn ...)
+; #todo (flame/define-reactive! :sorted-todos ...) => (fn sorted-todos-fn ...)
+(defn defreactive
+  ; #todo reactive facet view vista vision scene snippet projection chunk flake shard splinter
   ; #todo slice fragment shatter sliver factor element flare beam ray glint ember glow
-  "Defines a facet of global state given a context map with keys [:facet-id :input-facets :tx-fn]"
+  "Defines a reactive view of global state given a context map with keys [:id :reactive-inputs :tx-fn]"
   [ctx]
-  (t/with-map-vals ctx [facet-id input-facets tx-fn]
-    (when-not (keyword? facet-id) (throw (ex-info "facet-id must be a keyword" facet-id)))
-    (when-not (vector? input-facets) (throw (ex-info "input-facets must be a vector" input-facets)))
-    (when-not (every? keyword? input-facets) (throw (ex-info "facet values must be keywords" input-facets)))
+  (t/with-map-vals ctx [id reactive-inputs tx-fn]
+    (when-not (keyword? id) (throw (ex-info "id must be a keyword" id)))
+    (when-not (vector? reactive-inputs) (throw (ex-info "reactive-inputs must be a vector" reactive-inputs)))
+    (when-not (every? keyword? reactive-inputs) (throw (ex-info "reactive values must be keywords" reactive-inputs)))
     (when-not (fn? tx-fn) (throw (ex-info "tx-fn must be a function" tx-fn)))
     (let [sugar-forms (vec (apply concat
-                             (for [input-facet input-facets]
-                               [:<- [input-facet]])))
-          args-vec    (vec (concat [facet-id] sugar-forms [tx-fn]))]
+                             (for [curr-input reactive-inputs]
+                               [:<- [curr-input]])))
+          args-vec    (vec (concat [id] sugar-forms [tx-fn]))]
       (apply rf/reg-sub args-vec))))
 
 ; #todo need macro  (with-path state [:app-state :todos] ...) ; extract and replace in ctx

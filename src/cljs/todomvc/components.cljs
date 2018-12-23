@@ -65,8 +65,8 @@
            :on-stop #(reset! editing false)}])])))
 
 (defn task-list []
-  (let [visible-todos (flame/facet-value [:visible-todos :a :b])
-        all-complete? (flame/facet-value [:all-complete?])]
+  (let [visible-todos (flame/reactive-value [:visible-todos :a :b])
+        all-complete? (flame/reactive-value [:all-complete?])]
     [:section#main
      [:input#toggle-all
       {:type      "checkbox"
@@ -79,23 +79,22 @@
       (for [todo-curr visible-todos]
         ^{:key (:id todo-curr)} [task-list-row todo-curr])]])) ; delegate to task-list-row component
 
-; These buttons are actually hrefs (hyperliks) that will cause broswser navigation observed by History
-; and propogated via secretary.
+; These buttons will dispatch events that will cause browser navigation observed by History
+; and propagated via secretary.
 (defn footer-controls []
-  (let [[num-active num-completed] (flame/facet-value [:footer-counts 1 2])
-        display-mode               (flame/facet-value [:display-mode])
-
-        ; #todo #bug doesn't visually switch from initial :all when click :active
-        anchor-generator-fn (fn [filter-kw txt]
-                              [:a {:class (when (= filter-kw display-mode) "selected")
-                                   :href  (str "/#/" (name filter-kw))} txt])]
+  (let [[num-active num-completed] (flame/reactive-value [:footer-counts 1 2])
+        display-mode (flame/reactive-value [:display-mode])]
     [:footer#footer
      [:span#todo-count
-      [:strong num-active] (ts/pluralize-with num-active " item") " left"]
+      [:strong num-active]
+      (ts/pluralize-with num-active " item") " left  (" display-mode ")"]
      [:ul#filters
-      [:li (anchor-generator-fn :all "All")]
-      [:li (anchor-generator-fn :active "Active")]
-      [:li (anchor-generator-fn :completed "Completed")]]
+      [:li [:input.mode-button {:type    "button" :value "All" :id :all
+                                :onClick #(flame/dispatch-event [:set-display-mode :all])}]]
+      [:li [:input.mode-button {:type    "button" :value "Active" :id :active
+                                :onClick #(flame/dispatch-event [:set-display-mode :active])}]]
+      [:li [:input.mode-button {:type    "button" :value "Completed" :id :completed
+                                :onClick #(flame/dispatch-event [:set-display-mode :completed])}]]]
      (when (pos? num-completed)
        [:button#clear-completed
         {:on-click #(flame/dispatch-event [:clear-completed])}
@@ -114,7 +113,7 @@
   [:div
    [:section#todoapp
     [task-entry]
-    (when (t/not-empty? (flame/facet-value [:todos]))
+    (when (t/not-empty? (flame/reactive-value [:todos]))
       [task-list])
     [footer-controls]]
    [:footer#info
@@ -125,7 +124,7 @@
 (defn ajax-says []
   [:div
    [:span {:style {:color :darkgreen}} [:strong "AJAX says: "]]
-   [:span {:style {:font-style :italic}} nbsp nbsp (flame/facet-value [:ajax-response])]])
+   [:span {:style {:font-style :italic}} nbsp nbsp (flame/reactive-value [:ajax-response])]])
 
 (defn root []       ; was simple-component
   [:div
