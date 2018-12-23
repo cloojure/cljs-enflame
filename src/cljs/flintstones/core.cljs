@@ -1,6 +1,6 @@
 (ns flintstones.core
   (:require
-    [cljsjs.react-bootstrap]
+    ;[cljsjs.react-bootstrap]
     ;[cljs-react-bootstrap.handlers]
     ;[cljs-react-bootstrap.subs]
     ;[cljs-react-bootstrap.views :as views]

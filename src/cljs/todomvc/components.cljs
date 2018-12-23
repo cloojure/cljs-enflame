@@ -46,39 +46,45 @@
 
 (defn task-list-row []
   (let [editing (r/atom false)]
-    (fn [{:keys [id completed title]}]
-      [:li {:class (cond-> ""
-                     completed (str " completed")
-                     @editing (str " editing"))}
-       [:div.view
-        [:input.toggle {:type      :checkbox
-                        :checked   completed
-                        :on-change #(flame/dispatch-event [:toggle-completed id])}]
-        [:label {:on-double-click #(reset! editing true)}
-         title]
-        [:button.destroy
-         {:on-click #(flame/dispatch-event [:delete-todo id])}]]
-       (when @editing
-         [input-field
-          {:class   "edit"
-           :title   title
-           :on-save #(if (seq %)
-                       (flame/dispatch-event [:update-title id %])
-                       (flame/dispatch-event [:delete-todo id]))
-           :on-stop #(reset! editing false)}])])))
+    (fn [todo-curr]
+      (t/spy :task-list-row todo-curr)
+      (let [{:keys [id completed title]} todo-curr]
+        [:li.list-group-item
+         ;{:class (cond->
+         ;          "" completed (str " completed")
+         ;          @editing (str " editing"))}
+         [:div.row
+          [:div.form-inline.col-xs-1
+           [:input  ; .toggle
+            {:type      :checkbox
+             :checked   completed
+             :on-change #(flame/dispatch-event [:toggle-completed id])}]]
+          [:div.form-group.col-xs-10
+           [:label {:on-double-click #(reset! editing true)} title]]
+          [:div.col-xs-1
+           [:button.btn.btn-xs
+            {:on-click #(flame/dispatch-event [:delete-todo id])
+             ;:style    {:float :right}
+             } "X"]]
+          (when @editing
+            [input-field
+             {:class   "edit"
+              :title   title
+              :on-save #(if (seq %)
+                          (flame/dispatch-event [:update-title id %])
+                          (flame/dispatch-event [:delete-todo id]))
+              :on-stop #(reset! editing false)}])]]))))
 
 (defn task-list []
   (let [visible-todos (flame/reactive-value [:visible-todos :a :b])
         all-complete? (flame/reactive-value [:all-complete?])]
-    [:section#main
+    [:div.panel-body       ; #main
      [:input#toggle-all
-      {:type      "checkbox"
-       :checked   all-complete?
+      {:type      "checkbox" :checked   all-complete?
        :on-change #(flame/dispatch-event [:complete-all-toggle])}]
-     [:label        ; #todo this does not seem to work (as a tooltip?)
-      {:for "toggle-all"}
+     [:label {:for "toggle-all"}
       "Mark all as complete"]
-     [:ul#todo-list
+     [:ul.list-group           ; #todo-list
       (for [todo-curr visible-todos]
         ^{:key (:id todo-curr)} [task-list-row todo-curr])]])) ; delegate to task-list-row component
 
@@ -87,24 +93,27 @@
 (defn footer-controls []
   (let [[num-active num-completed] (flame/reactive-value [:footer-counts 1 2])
         display-mode (flame/reactive-value [:display-mode])]
-    [:footer        ; #footer
+    [:div.panel-footer        ; #footer
      [:span ; #todo-count
       [:strong num-active]
       (ts/pluralize-with num-active " item") " left  (" display-mode ")"]
-     [:span         ; #filters
-      [:button {:type     :button :id :all :class "filters"
+     [:span "----"]
+     [:div.btn-group.btn-group-xs
+      [:button.btn.btn-xs {:type     :button :id :all :class "filters"
                 :on-click #(flame/dispatch-event [:set-display-mode :all])} "All"]
-      [:button.filters {:type     :button :id :active
+      [:button.btn.btn-xs {:type     :button :id :active
                 :on-click #(flame/dispatch-event [:set-display-mode :active])} "Active"]
-      [:button.filters {:type     :button :id :completed
-                :on-click #(flame/dispatch-event [:set-display-mode :completed])} "Completed"]
+      [:button.btn.btn-xs {:type     :button :id :completed
+                :on-click #(flame/dispatch-event [:set-display-mode :completed])} "Completed"] ]
+     [:span "----"]
+     [:div.btn-group.btn-group-xs
       (when (pos? num-completed)
-        [:button.filters {:type :button ; :id      :completed
-                     :on-click #(flame/dispatch-event [:clear-completed])} "Clear Completed"])
-      ]]))
+        [:button.btn.btn-xs {:type :button ; :id      :completed
+                     :on-click #(flame/dispatch-event [:clear-completed])} "Clear Completed"])]
+     ]))
 
 (defn task-entry []
-  [:header#header
+  [:header          ; #header
    [:h1 "todos"]
    [input-field
     {:id          "new-todo"
@@ -130,11 +139,11 @@
    [:span {:style {:font-style :italic}} nbsp nbsp (flame/reactive-value [:ajax-response])]])
 
 (defn root []       ; was simple-component
-  [:div
-   [rbs/panel
-    [rbs/label "React-Bootstrap Label!"]
-    [rbs/button {:bs-size  :xsmall
-                 :on-click #(js/alert "Hello from React-Bootstrap!")} "Click me!"]]
+  [:div {:class "container"}
+   ;[rbs/panel
+   ; [rbs/label "React-Bootstrap Label!"]
+   ; [rbs/button {:bs-size  :xsmall
+   ;              :on-click #(js/alert "Hello from React-Bootstrap!")} "Click me!"]]
 
    [:hr]
    [:div

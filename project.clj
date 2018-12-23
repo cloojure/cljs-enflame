@@ -4,7 +4,7 @@
                  [binaryage/devtools "0.9.10"]
                  [binaryage/oops "0.6.4"]
                  [cljs-ajax "0.8.0"]
-                 [cljsjs/react-bootstrap "0.31.5-0"]
+                ;[cljsjs/react-bootstrap "0.31.5-0"]
                  [org.clojure/clojure "1.10.0"]
                  [org.clojure/clojurescript "1.10.439"]
                  [re-frame "0.10.6"]
