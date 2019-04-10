@@ -55,7 +55,7 @@
 ;---------------------------------------------------------------------------------------------------
 (defn event-value [event]  (-> event .-target .-value))
 
-(defn reactive-value [reactive-id] @(rf/subscribe reactive-id)) ; #todo was (listen ...)
+(defn observing [reactive-id] @(rf/subscribe reactive-id)) ; #todo was (listen ...)
 
 ;---------------------------------------------------------------------------------------------------
 (defonce ctx-trim-queue-stack (atom true))
@@ -136,16 +136,19 @@
      :enter identity
      :leave (fn [ctx] ; #todo (with-result ctx ...)
               (let [ajax (:ajax ctx)]
-               ;(t/spyx :ajax-intc-start ctx)
-               ;(t/spyx :ajax-intc-start ajax)
+                ;(t/spyx :ajax-intc-start ctx)
+                ;(t/spyx :ajax-intc-start ajax)
                 (when-not (nil? ajax)
+                  (t/spy :awt-ajax-intc--ajax ajax)
                   (let [method            (t/grab :method ajax)
                         uri               (t/grab :uri ajax)
                         ajax-opts-present (set/intersection (set (keys ajax)) ajax-options-keys)
                         opts-map          (t/submap-by-keys ajax ajax-opts-present)]
-                   ;(t/spy :ajax-intc-ready (t/vals->map method uri opts-map))
+                    ;(t/spy :ajax-intc-ready (t/vals->map method uri opts-map))
                     (condp = method
-                      :get (ajax/GET uri opts-map)
+                      :get (do
+                             (t/spy :awt-ajax-intc--opts-map opts-map)
+                             (ajax/GET uri opts-map))
                       :put (ajax/PUT uri opts-map)
                       :post (ajax/POST uri opts-map)
                       (throw (ex-info "ajax-intc: unrecognized :method" ajax))))))
@@ -155,7 +158,7 @@
 ;---------------------------------------------------------------------------------------------------
 ; #todo need macro  (definterceptor todos-done {:name ...   :enter ...   :leave ...} )
 
-(defn defevent
+(defn define-event
   "Defines the event handler given a context map with keys [:event-id :interceptor-chain :handler-fn]"
   [ctx]
   (t/with-map-vals ctx [event-id interceptor-chain handler-fn]
@@ -191,8 +194,8 @@
 
 ; #todo macro to insert reactive as fn-name;  :sorted-todos => (fn sorted-todos-fn ...)
 ; #todo (flame/define-reactive! :sorted-todos ...) => (fn sorted-todos-fn ...)
-(defn defreactive
-  ; #todo reactive facet view vista vision scene snippet projection chunk flake shard splinter
+(defn define-flame
+  ; #todo reactive facet flame flare view vista vision scene snippet projection chunk flake shard splinter
   ; #todo slice fragment shatter sliver factor element flare beam ray glint ember glow
   "Defines a reactive view of global state given a context map with keys [:id :reactive-inputs :tx-fn]"
   [ctx]

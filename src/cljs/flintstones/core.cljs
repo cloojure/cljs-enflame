@@ -15,7 +15,7 @@
     [todomvc.components :as components]
     [todomvc.enflame :as flame]
     [todomvc.events :as events] ; These two are only required to make the compiler
-    [todomvc.reactives :as reactives] ; load them (see docs/Basic-App-Structure.md)
+    [todomvc.flames :as reactives] ; load them (see docs/Basic-App-Structure.md)
     [tupelo.core :as t]
   )
   (:import [goog.history Html5History EventType]))
@@ -58,8 +58,11 @@ Go ahead and edit it and see reloading in action. Again, or not.")
   ; #todo remove this - make a built-in :init that every event-handler verifies & waits for (top priority)
   ; #todo add concept of priority to event dispatch
 
-  (flame/dispatch-event [:ajax-demo :get "/fox.txt" {:handler       ajax-handler
-                                                     :error-handler ajax-error-handler}])
+  (flame/dispatch-event [:ajax-demo :get "/fox.txt"
+                         {:handler       ajax-handler
+                          :error-handler ajax-error-handler
+                          :headers       {"custom" "something"}
+                          }])
 
 
   (r/render [components/root] (js/document.getElementById "tgt-div"))

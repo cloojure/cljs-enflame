@@ -14,7 +14,8 @@
 ;   2. Default initial values
 (defn initialise-app-state [ctx -event-]
   (let [local-store-todos (t/grab :local-store-todos ctx)
-        initial-state     (t/glue app-state/default-state {:todos local-store-todos})
+        initial-state     (t/glue app-state/default-state
+                            {:todos local-store-todos})
        ;initial-state     app-state/default-state ; allows user to reset LocalStore during development
         ctx-out           (t/glue ctx {:app-state initial-state})]
     ctx-out))
@@ -79,53 +80,53 @@
   ])
 
 (defn register-handlers []
-  (flame/defevent
+  (flame/define-event
     {:event-id          :initialize-app-state
      :interceptor-chain [app-state/localstore-load-intc app-state/check-spec-intc flame/trace-print]
      :handler-fn        initialise-app-state})
 
-  (flame/defevent
+  (flame/define-event
     {:event-id          :set-display-mode ; receives events from URL changes via History/secretary
      :interceptor-chain [app-state/check-spec-intc]
      :handler-fn        set-display-mode})
 
-  (flame/defevent
+  (flame/define-event
     {:event-id          :add-todo
      :interceptor-chain common-interceptors
      :handler-fn        add-todo})
 
-  (flame/defevent
+  (flame/define-event
     {:event-id          :toggle-completed
      :interceptor-chain common-interceptors
      :handler-fn        toggle-completed})
 
-  (flame/defevent
+  (flame/define-event
     {:event-id          :update-title
      :interceptor-chain common-interceptors
      :handler-fn        update-title})
 
-  (flame/defevent
+  (flame/define-event
     {:event-id          :delete-todo
      :interceptor-chain common-interceptors
      :handler-fn        delete-todo})
 
-  (flame/defevent
+  (flame/define-event
     {:event-id          :clear-completed
      :interceptor-chain common-interceptors
      :handler-fn        clear-completed-todos})
 
-  (flame/defevent
+  (flame/define-event
     {:event-id          :complete-all-toggle
      :interceptor-chain common-interceptors
      :handler-fn        toggle-completed-all})
 
-  (flame/defevent
+  (flame/define-event
     {:event-id          :ajax-demo
      :interceptor-chain common-interceptors
      :handler-fn        (fn [ctx [-e- method uri opts]]
                           (assoc ctx :ajax (t/glue {:method method :uri uri} opts)))})
 
-  (flame/defevent
+  (flame/define-event
     {:event-id          :ajax-response
      :interceptor-chain common-interceptors
      :handler-fn        (fn [ctx [-e- response]]

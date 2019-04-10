@@ -76,8 +76,8 @@
               :on-stop #(reset! editing false)}])]]))))
 
 (defn task-list []
-  (let [visible-todos (flame/reactive-value [:visible-todos :a :b])
-        all-complete? (flame/reactive-value [:all-complete?])]
+  (let [visible-todos (flame/observing [:visible-todos :a :b])
+        all-complete? (flame/observing [:all-complete?])]
     [:div.panel-body       ; #main
      [:input#toggle-all
       {:type      "checkbox" :checked   all-complete?
@@ -91,8 +91,8 @@
 ; These buttons will dispatch events that will cause browser navigation observed by History
 ; and propagated via secretary.
 (defn footer-controls []
-  (let [[num-active num-completed] (flame/reactive-value [:footer-counts 1 2])
-        display-mode (flame/reactive-value [:display-mode])]
+  (let [[num-active num-completed] (flame/observing [:footer-counts 1 2])
+        display-mode (flame/observing [:display-mode])]
     [:div.panel-footer        ; #footer
      [:span ; #todo-count
       [:strong num-active]
@@ -125,7 +125,7 @@
   [:div
    [:section#todoapp
     [task-entry]
-    (when (t/not-empty? (flame/reactive-value [:todos]))
+    (when (t/not-empty? (flame/observing [:todos]))
       [task-list])
     [footer-controls]]
    [:footer#info
@@ -136,7 +136,7 @@
 (defn ajax-says []
   [:div
    [:span {:style {:color :darkgreen}} [:strong "AJAX says: "]]
-   [:span {:style {:font-style :italic}} nbsp nbsp (flame/reactive-value [:ajax-response])]])
+   [:span {:style {:font-style :italic}} nbsp nbsp (flame/observing [:ajax-response])]])
 
 (defn root []       ; was simple-component
   [:div {:class "container"}

@@ -1,6 +1,7 @@
 (ns todomvc.app-state
   (:require [cljs.reader]
             [cljs.spec.alpha :as s]
+            [clojure.pprint :refer [pprint]]
             [re-frame.core :as rf]
             [todomvc.enflame :as flame]
             [tupelo.core :as t]))
@@ -61,7 +62,8 @@
      :leave (fn [ctx]
               (let [app-state (t/grab :app-state ctx)]
                 (when-not (s/valid? ::app-state app-state)
-                  (println :check-spec-intc :ctx ctx)
+                  (println :check-spec-intc :ctx)
+                  (pprint ctx)
                   (println :failed-check (s/explain-str ::app-state app-state))
                   (throw (ex-info (str "spec check failed: " (s/explain-str ::app-state app-state)) app-state))))
               ctx)}))
@@ -84,10 +86,12 @@
     {:id    :localstore-load-intc
      :enter (fn [ctx]
               (let [item-read    (.getItem js/localStorage js-localstore-key)
-                    loaded-value (some-> item-read
-                                   (cljs.reader/read-string) ; convert edn string => actual map
-                                   (t/->sorted-map)) ; coerce to a sorted map (from unsorted map)
-                    ctx-sort   (t/glue ctx {:local-store-todos loaded-value})]
-                ctx-sort))
+                    loaded-value (t/with-nil-default (sorted-map)
+                                   (some-> item-read
+                                     (cljs.reader/read-string) ; convert edn string => actual map
+                                     (t/->sorted-map))) ; coerce to a sorted map (from unsorted map)
+                    >>           (println :awt-localstore-load-intc--loaded-value-1 loaded-value)
+                    ctx-out     (t/glue ctx {:local-store-todos loaded-value})]
+                ctx-out))
      :leave identity}))
 
