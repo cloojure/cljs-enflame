@@ -32,7 +32,7 @@ Go ahead and edit it and see reloading in action. Again, or not.")
 ;---------------------------------------------------------------------------------------------------
 (defn ajax-handler [response]
   (.log js/console (str "cljs-ajax: successfully read:  " response))
-  (flame/dispatch-event [:ajax-response response]) )
+  (flame/fire-event [:ajax-response response]) )
 
 (defn ajax-error-handler [{:keys [status status-text]}]
   (.log js/console (str "cljs-ajax: something bad happened:  " status " " status-text)))
@@ -53,12 +53,12 @@ Go ahead and edit it and see reloading in action. Again, or not.")
 
   ; Put an initial value into :app-state. The event handler for `:initialize-app-state` can be found in `events.cljs`
   ; Using the sync version of dispatch means that value is in place before we go onto the next step.
-  (flame/dispatch-event-sync [:initialize-app-state])
-  (flame/dispatch-event [:set-display-mode :all])
+  (flame/fire-event-sync [:initialize-app-state])
+  (flame/fire-event [:set-display-mode :all])
   ; #todo remove this - make a built-in :init that every event-handler verifies & waits for (top priority)
   ; #todo add concept of priority to event dispatch
 
-  (flame/dispatch-event [:ajax-demo :get "/fox.txt"
+  (flame/fire-event [:ajax-demo :get "/fox.txt"
                          {:handler       ajax-handler
                           :error-handler ajax-error-handler
                           :headers       {"custom" "something"}

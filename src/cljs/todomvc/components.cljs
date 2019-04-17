@@ -58,12 +58,12 @@
            [:input  ; .toggle
             {:type      :checkbox
              :checked   completed
-             :on-change #(flame/dispatch-event [:toggle-completed id])}]]
+             :on-change #(flame/fire-event [:toggle-completed id])}]]
           [:div.form-group.col-xs-10
            [:label {:on-double-click #(reset! editing true)} title]]
           [:div.col-xs-1
            [:button.btn.btn-xs
-            {:on-click #(flame/dispatch-event [:delete-todo id])
+            {:on-click #(flame/fire-event [:delete-todo id])
              ;:style    {:float :right}
              } "X"]]
           (when @editing
@@ -71,17 +71,17 @@
              {:class   "edit"
               :title   title
               :on-save #(if (seq %)
-                          (flame/dispatch-event [:update-title id %])
-                          (flame/dispatch-event [:delete-todo id]))
+                          (flame/fire-event [:update-title id %])
+                          (flame/fire-event [:delete-todo id]))
               :on-stop #(reset! editing false)}])]]))))
 
 (defn task-list []
-  (let [visible-todos (flame/observing [:visible-todos :a :b])
-        all-complete? (flame/observing [:all-complete?])]
+  (let [visible-todos (flame/watching [:visible-todos :a :b])
+        all-complete? (flame/watching [:all-complete?])]
     [:div.panel-body       ; #main
      [:input#toggle-all
       {:type      "checkbox" :checked   all-complete?
-       :on-change #(flame/dispatch-event [:complete-all-toggle])}]
+       :on-change #(flame/fire-event [:complete-all-toggle])}]
      [:label {:for "toggle-all"}
       "Mark all as complete"]
      [:ul.list-group           ; #todo-list
@@ -91,8 +91,8 @@
 ; These buttons will dispatch events that will cause browser navigation observed by History
 ; and propagated via secretary.
 (defn footer-controls []
-  (let [[num-active num-completed] (flame/observing [:footer-counts 1 2])
-        display-mode (flame/observing [:display-mode])]
+  (let [[num-active num-completed] (flame/watching [:footer-counts 1 2])
+        display-mode (flame/watching [:display-mode])]
     [:div.panel-footer        ; #footer
      [:span ; #todo-count
       [:strong num-active]
@@ -100,16 +100,16 @@
      [:span "----"]
      [:div.btn-group.btn-group-xs
       [:button.btn.btn-xs {:type     :button :id :all :class "filters"
-                :on-click #(flame/dispatch-event [:set-display-mode :all])} "All"]
+                :on-click #(flame/fire-event [:set-display-mode :all])} "All"]
       [:button.btn.btn-xs {:type     :button :id :active
-                :on-click #(flame/dispatch-event [:set-display-mode :active])} "Active"]
+                :on-click #(flame/fire-event [:set-display-mode :active])} "Active"]
       [:button.btn.btn-xs {:type     :button :id :completed
-                :on-click #(flame/dispatch-event [:set-display-mode :completed])} "Completed"] ]
+                :on-click #(flame/fire-event [:set-display-mode :completed])} "Completed"] ]
      [:span "----"]
      [:div.btn-group.btn-group-xs
       (when (pos? num-completed)
         [:button.btn.btn-xs {:type :button ; :id      :completed
-                     :on-click #(flame/dispatch-event [:clear-completed])} "Clear Completed"])]
+                     :on-click #(flame/fire-event [:clear-completed])} "Clear Completed"])]
      ]))
 
 (defn task-entry []
@@ -119,13 +119,13 @@
     {:id          "new-todo"
      :placeholder "What needs to be done?"
      :on-save     #(when (t/not-empty? (str/trim %))
-                     (flame/dispatch-event [:add-todo %]))}]])
+                     (flame/fire-event [:add-todo %]))}]])
 
 (defn todo-root []
   [:div
    [:section#todoapp
     [task-entry]
-    (when (t/not-empty? (flame/observing [:todos]))
+    (when (t/not-empty? (flame/watching [:todos]))
       [task-list])
     [footer-controls]]
    [:footer#info
@@ -136,7 +136,7 @@
 (defn ajax-says []
   [:div
    [:span {:style {:color :darkgreen}} [:strong "AJAX says: "]]
-   [:span {:style {:font-style :italic}} nbsp nbsp (flame/observing [:ajax-response])]])
+   [:span {:style {:font-style :italic}} nbsp nbsp (flame/watching [:ajax-response])]])
 
 (defn root []       ; was simple-component
   [:div {:class "container"}

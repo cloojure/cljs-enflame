@@ -55,7 +55,10 @@
 ;---------------------------------------------------------------------------------------------------
 (defn event-value [event]  (-> event .-target .-value))
 
-(defn observing [reactive-id] @(rf/subscribe reactive-id)) ; #todo was (listen ...)
+(defn watching
+  "Returns a reactive value for reactive-id. Wrapper for @(rf/subscribe reactive-id)"
+  [reactive-id]
+  @(rf/subscribe reactive-id)) ; #todo was (listen ...)
 
 ;---------------------------------------------------------------------------------------------------
 (defonce ctx-trim-queue-stack (atom true))
@@ -118,7 +121,6 @@
                 ;(js/console.info :app-state-intc-enter :end (ctx-trim ctx-out))
                 ctx-out))
      :leave (fn [ctx]
-              ;(println :app-state-intc-leave :begin (ctx-trim ctx))
               (let [app-state (t/grab :app-state ctx)]
                 (when-not (identical? @rfdb/app-db app-state)
                   (println :app-state-intc-leave "resetting rfdb/app-db atom...")
@@ -180,16 +182,17 @@
 ; #todo throw if receive non-registered event (flag to disable this?)
 
 ; #todo need plumatic schema:  event => [:kw-evt-name & args]
-(defn dispatch-event
+(defn fire-event
   [& args]
   (t/spyx :dispatch-event args )
   (apply rf/dispatch args) )
 
-(defn dispatch-event-sync [& args] (apply rf/dispatch-sync args) )
+(defn fire-event-sync [& args] (apply rf/dispatch-sync args) )
 
 ;****************************************************************
-; Define built-in :app-state reactive
+; Define built-in :app-state reactive flame
 (rf/reg-sub :app-state (fn [app-state -query-] app-state)) ; loaded from rfdb/app-db ratom
+; #todo ***** rename => :flame-root *****
 ;****************************************************************
 
 ; #todo macro to insert reactive as fn-name;  :sorted-todos => (fn sorted-todos-fn ...)
@@ -197,15 +200,15 @@
 (defn define-flame
   ; #todo reactive facet flame flare view vista vision scene snippet projection chunk flake shard splinter
   ; #todo slice fragment shatter sliver factor element flare beam ray glint ember glow
-  "Defines a reactive view of global state given a context map with keys [:id :reactive-inputs :tx-fn]"
+  "Defines a reactive view of global state given a context map with keys [:id :parent-flames :tx-fn]"
   [ctx]
-  (t/with-map-vals ctx [id reactive-inputs tx-fn]
+  (t/with-map-vals ctx [id parent-flames tx-fn]
     (when-not (keyword? id) (throw (ex-info "id must be a keyword" id)))
-    (when-not (vector? reactive-inputs) (throw (ex-info "reactive-inputs must be a vector" reactive-inputs)))
-    (when-not (every? keyword? reactive-inputs) (throw (ex-info "reactive values must be keywords" reactive-inputs)))
+    (when-not (vector? parent-flames) (throw (ex-info "parent-flames must be a vector" parent-flames)))
+    (when-not (every? keyword? parent-flames) (throw (ex-info "reactive values must be keywords" parent-flames)))
     (when-not (fn? tx-fn) (throw (ex-info "tx-fn must be a function" tx-fn)))
     (let [sugar-forms (vec (apply concat
-                             (for [curr-input reactive-inputs]
+                             (for [curr-input parent-flames]
                                [:<- [curr-input]])))
           args-vec    (vec (concat [id] sugar-forms [tx-fn]))]
       (apply rf/reg-sub args-vec))))
