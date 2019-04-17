@@ -126,7 +126,7 @@
    [:section#todoapp
     [task-entry]
     (when (t/not-empty? (flame/watching [:todos]))
-      [task-list]) ; #todo Reagent => (r/comp task-list <arg1> <arg2> ...)
+      [task-list])
     [footer-controls]]
    [:footer#info
     [:p "Double-click to edit a todo"]]])
@@ -152,9 +152,18 @@
      "I have " [:strong "bold"]
      [:span {:style {:color "red"}} " and red"] " text."]]
    [:hr]
-   [ajax-says]
+   [ajax-says] ; #todo Reagent => (r/comp ajax-says <arg1> <arg2> ...)
    [:hr]
    [:div
-    [todo-root]]
+    [todo-root]] ; #todo Reagent => (r/comp todo-root <arg1> <arg2> ...)
    [:hr] ])
+
+
+
+
+
+
+
+
+
 
