@@ -126,7 +126,7 @@
    [:section#todoapp
     [task-entry]
     (when (t/not-empty? (flame/watching [:todos]))
-      [task-list])
+      [task-list]) ; #todo Reagent => (r/comp task-list <arg1> <arg2> ...)
     [footer-controls]]
    [:footer#info
     [:p "Double-click to edit a todo"]]])

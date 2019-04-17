@@ -48,7 +48,7 @@ Go ahead and edit it and see reloading in action. Again, or not.")
   "Initiates the cljs application"
   []
   (println "app-start - enter")
-  (events/register-handlers)
+  (events/define-all-events!)
   (reactives/initialize)
 
   ; Put an initial value into :app-state. The event handler for `:initialize-app-state` can be found in `events.cljs`

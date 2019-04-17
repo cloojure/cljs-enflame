@@ -75,14 +75,17 @@
   [app-state/check-spec-intc
    app-state/localstore-save-intc
    flame/ajax-intc
-   ;flame/trace
-   flame/trace-print
+  ;flame/trace-log-intc
+   flame/trace-print-intc
   ])
 
-(defn register-handlers []
+(defn define-all-events!
+  "Defines all Enflame events.  Should be called from app main entry point, which
+  ensures the event definitions will be evaluated. "
+  []
   (flame/define-event
     {:event-id          :initialize-app-state
-     :interceptor-chain [app-state/localstore-load-intc app-state/check-spec-intc flame/trace-print]
+     :interceptor-chain [app-state/localstore-load-intc app-state/check-spec-intc flame/trace-print-intc]
      :handler-fn        initialise-app-state})
 
   (flame/define-event

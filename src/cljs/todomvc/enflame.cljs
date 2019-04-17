@@ -1,6 +1,6 @@
 (ns todomvc.enflame ; #todo => re-state ???
   (:require
-    [ajax.core :as ajax]
+    [ajax.core :as ajax] ; *** used by ajax-intc! ***
     [clojure.set :as set]
     [re-frame.core :as rf]
     [re-frame.db :as rfdb]
@@ -35,7 +35,7 @@
 ; #todo [:delete-item 42] => {:event/id :delete-item :idx 42}
 ; #todo   {:event/id :set-timer  :units :ms :value 50 :action (fn [] (js/alert "Expired!") }
 
-; #todo (dispatch-event {:event/id <some-id> ...} )   => event map
+; #todo (fire-event {:event/id <some-id> ...} )   => event map
 ; #todo (add-task state {:effect/id <some-id> ...} )  => updated state
 
 ; #todo setup, prep, resources, augments, ancillary, annex, ctx, info, data
@@ -183,11 +183,14 @@
 
 ; #todo need plumatic schema:  event => [:kw-evt-name & args]
 (defn fire-event
+  "Fires an event"
   [& args]
-  (t/spyx :dispatch-event args )
+  (t/spyx :fire-event args )
   (apply rf/dispatch args) )
 
-(defn fire-event-sync [& args] (apply rf/dispatch-sync args) )
+(defn fire-event-sync
+  "Fires an event a la re-frame/dispatch-sync"
+  [& args] (apply rf/dispatch-sync args) )
 
 ;****************************************************************
 ; Define built-in :app-state reactive flame
@@ -220,7 +223,7 @@
 ;---------------------------------------------------------------------------------------------------
 ; tracing interceptor (modified rfstd/debug
 
-(def trace
+(def trace-log-intc
   "An interceptor which logs/instruments an event handler's actions to
   `js/console.log`. See examples/todomvc/src/events.cljs for use.
   Output includes:
@@ -245,7 +248,7 @@
                 )
               ctx)}))
 
-(def trace-print
+(def trace-print-intc
   "An interceptor which logs/instruments an event handler's actions using `println`.
   See examples/todomvc/src/events.cljs for use.
   Output includes:
