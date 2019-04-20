@@ -1,21 +1,15 @@
 (ns flintstones.core
-  (:require
-    ;[cljsjs.react-bootstrap]
-    ;[cljs-react-bootstrap.handlers]
-    ;[cljs-react-bootstrap.subs]
-    ;[cljs-react-bootstrap.views :as views]
-    ;[cljs-react-bootstrap.config :as config]
-    ;[cljs-react-bootstrap.layout :as layout]
-
+  (:require ; [bidi.bidi :as bidi]
+    [accountant.core :as accountant]
     [devtools.core :as devtools]
-    [goog.events]
     [flintstones.slate :as slate]
+    [goog.events]
     [reagent.core :as r]
-   ;[bidi.bidi :as bidi]
+    [secretary.core :as secretary]
     [todomvc.components :as components]
     [todomvc.enflame :as flame]
     [todomvc.events :as events] ; These two are only required to make the compiler
-    [todomvc.flames :as reactives] ; load them (see docs/Basic-App-Structure.md)
+    [todomvc.flames :as flames] ; load them (see docs/Basic-App-Structure.md)
     [tupelo.core :as t]
   )
   (:import [goog.history Html5History EventType]))
@@ -49,7 +43,15 @@ Go ahead and edit it and see reloading in action. Again, or not.")
   []
   (println "app-start - enter")
   (events/define-all-events!)
-  (reactives/initialize)
+  (flames/initialize)
+
+  (println "accountant/configure-navigation! - before")
+  (accountant/configure-navigation!
+    {:nav-handler  (fn [path]
+                     (secretary/dispatch! path))
+     :path-exists? (fn [path]
+                     (secretary/locate-route path)) })
+  (println "accountant/configure-navigation! - after")
 
   ; Put an initial value into :app-state. The event handler for `:initialize-app-state` can be found in `events.cljs`
   ; Using the sync version of dispatch means that value is in place before we go onto the next step.
