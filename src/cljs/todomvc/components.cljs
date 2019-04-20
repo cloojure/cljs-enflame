@@ -1,18 +1,13 @@
 (ns todomvc.components
   "These functions are all Reagent components"
   (:require
-    [todomvc.react-bootstrap-core :as rbs]
-    ;[cljs-react-bootstrap.react-bootstrap.dropdown :as rbs-dropdown]
-    ;[cljs-react-bootstrap.react-bootstrap.modal :as rbs-modal]
-    ;[cljs-react-bootstrap.react-bootstrap.navbar :as rbs-navbar]
-
-    [goog.string :as gstring]
     [clojure.string :as str]
+    [goog.string :as gstring]
     [oops.core :as oops]
     [reagent.core :as r]
     [todomvc.enflame :as flame]
-    [tupelo.core :as t]
     [tupelo.char :as char]
+    [tupelo.core :as t]
     [tupelo.string :as ts]
     ))
 

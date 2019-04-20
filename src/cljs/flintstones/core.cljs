@@ -11,8 +11,9 @@
     [todomvc.events :as events] ; These two are only required to make the compiler
     [todomvc.flames :as flames] ; load them (see docs/Basic-App-Structure.md)
     [tupelo.core :as t]
-  )
-  (:import [goog.history Html5History EventType]))
+    )
+  (:import [goog.history EventType ; Html5History
+           ]))
 
 ; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
 (enable-console-print!)
@@ -45,13 +46,18 @@ Go ahead and edit it and see reloading in action. Again, or not.")
   (events/define-all-events!)
   (flames/initialize)
 
-  (println "accountant/configure-navigation! - before")
-  (accountant/configure-navigation!
-    {:nav-handler  (fn [path]
-                     (secretary/dispatch! path))
-     :path-exists? (fn [path]
-                     (secretary/locate-route path)) })
-  (println "accountant/configure-navigation! - after")
+  ;(do
+  ;  (println "accountant/configure-navigation! - before")
+  ;  (accountant/configure-navigation!
+  ;    {:nav-handler  (fn [path]
+  ;                     (t/spy :accountant--nav-handler--path path)
+  ;                     (t/spy :accountant--nav-handler--result
+  ;                       (secretary/dispatch! path)))
+  ;     :path-exists? (fn [path]
+  ;                     (t/spy :accountant--path-exists?--path path)
+  ;                     (t/spy :accountant--path-exists?--result
+  ;                       (secretary/locate-route path)) )})
+  ;  (println "accountant/configure-navigation! - after"))
 
   ; Put an initial value into :app-state. The event handler for `:initialize-app-state` can be found in `events.cljs`
   ; Using the sync version of dispatch means that value is in place before we go onto the next step.
