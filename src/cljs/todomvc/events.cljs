@@ -1,5 +1,6 @@
 (ns todomvc.events
   (:require
+    [accountant.core :as accountant]
     [oops.core :as oops]
     [todomvc.app-state :as app-state]
     [todomvc.enflame :as flame]
@@ -19,17 +20,6 @@
        ;initial-state     app-state/default-state ; allows user to reset LocalStore during development
         ctx-out           (t/glue ctx {:app-state initial-state})]
     ctx-out))
-
-; #todo need plumatic schema and tsk/KeyMap
-(defn set-display-mode
-  "Saves current 'showing' mode (3 filter buttons at the bottom of the display)"
-  [ctx [-e- new-filter-kw]] ; :- #{ :all, :active or :completed }
-  (t/spyx :set-display-mode new-filter-kw)
-  (let [all-filter-modes #{:all :active :completed}
-        new-filter-kw    (if (contains? all-filter-modes new-filter-kw)
-                           new-filter-kw
-                           :all)]
-    (assoc-in ctx [:app-state :display-mode] new-filter-kw)))
 
 (defn add-todo [ctx [-e- todo-title]]
   (update-in ctx [:app-state :todos] ; #todo make this be (with-path ctx [:app-state :todos] ...) macro
@@ -91,7 +81,10 @@
   (flame/define-event
     {:event-id          :set-display-mode ; receives events from URL changes via History/secretary
      :interceptor-chain [app-state/check-spec-intc]
-     :handler-fn        set-display-mode})
+     :handler-fn        (fn set-display-mode-fn ; Saves current 'showing' mode (3 filter buttons at the bottom of the display)
+                          [ctx [-e- filter-kw]] ; :- #{ :all, :active or :completed }
+                          (assoc-in ctx [:app-state :display-mode]
+                            (t/spyx :set-display-mode filter-kw)))})
 
   (flame/define-event
     {:event-id          :add-todo

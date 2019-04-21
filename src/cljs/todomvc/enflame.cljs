@@ -185,7 +185,7 @@
 (defn fire-event
   "Fires an event"
   [& args]
-  (t/spyx :fire-event args )
+  (t/spyx :flame/fire-event args )
   (apply rf/dispatch args) )
 
 (defn fire-event-sync

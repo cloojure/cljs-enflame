@@ -9,7 +9,7 @@
     [tupelo.char :as char]
     [tupelo.core :as t]
     [tupelo.string :as ts]
-    ))
+    [accountant.core :as accountant]))
 
 ; NOTE:  it seems this must be in a *.cljs file or it doesn't work on figwheel reloading
 (enable-console-print!)
@@ -94,12 +94,18 @@
       (ts/pluralize-with num-active " item") " left  (" display-mode ")"]
      [:span "----"]
      [:div.btn-group.btn-group-xs
-      [:button.btn.btn-xs {:type     :button :id :all :class "filters"
-                :on-click #(flame/fire-event [:set-display-mode :all])} "All"]
+
+      [:a {:href "/all"} "Show All Todos"]
+      ;[:button.btn.btn-xs {:type     :button :id :all :class "filters"
+      ;                     :on-click #(accountant/navigate! "/all")} ; simulate hyperlink to `/all`
+      ;                      "All"]
+
       [:button.btn.btn-xs {:type     :button :id :active
-                :on-click #(flame/fire-event [:set-display-mode :active])} "Active"]
+                           :on-click #(accountant/navigate! "/active")} ; simulate hyperlink to `/active`
+                           "Active"]
       [:button.btn.btn-xs {:type     :button :id :completed
-                :on-click #(flame/fire-event [:set-display-mode :completed])} "Completed"] ]
+                :on-click #(accountant/navigate! "/completed")} ; simulate hyperlink to `/completed`
+                           "Completed"] ]
      [:span "----"]
      [:div.btn-group.btn-group-xs
       (when (pos? num-completed)
