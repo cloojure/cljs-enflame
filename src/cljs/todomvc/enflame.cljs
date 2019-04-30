@@ -52,6 +52,10 @@
 ; #TODO CHANGE ALL HANDLERS to be (defn some-handler [ctx event]   (with-map-vals event [id new-filter-kw] ...)
 ;---------------------------------------------------------------------------------------------------
 
+; #todo add (flame/call <comp> & args) => [<comp & args] to avoid listy badness
+; #todo add (flame/list coll ) => (seq (doall stuff))  to avoid vector problems
+; maybe also (flame/component & stuff) => [ & stuff ] to avoid listy badness ???
+
 ;---------------------------------------------------------------------------------------------------
 (defn event-value [event]  (-> event .-target .-value))
 
